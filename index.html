@@ -1545,7 +1545,7 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
 
   if (pinOpt === 'show') {
     ctx.font = `bold 40px 'Sarabun', sans-serif`; ctx.fillStyle = '#FFE066';
-    ctx.fillText('ติดต่อผู้รู้รหัส: '+(currentPinOnly || '------'), 52, pinY + 58);
+    ctx.fillText(currentPinOnly || '------', 52, pinY + 58);
   } else if (pinOpt === 'contact') {
     ctx.font = `bold 32px 'Sarabun', sans-serif`; ctx.fillStyle = '#fff';
     ctx.fillText('ติดต่อผู้รู้รหัส: '+(contactText||'—'), 52, pinY + 58);
