@@ -1435,186 +1435,170 @@ function walletDesignerUpdate() {
 }
 
 function renderWalletPreview() {
-  const canvas = document.getElementById('wallet-canvas');
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
-  const qrUrl = getQRUrl();
-  drawWalletCard(canvas, opt, contactText, qrUrl, false);
+  // Pre-render QR first, then draw card
+  wdPreRenderQR(getQRUrl(), 230, () => {
+    drawWalletCard(document.getElementById('wallet-canvas'), opt, contactText, false);
+  });
 }
 
-function drawWalletCard(canvas, pinOpt, contactText, qrUrl, highRes) {
-  // Credit card: 85.6 × 54 mm at 300 DPI = 1011 × 638 px
+function wdPreRenderQR(qrUrl, size, cb) {
+  const d = document.getElementById('wd-qr-hidden');
+  d.innerHTML = '';
+  if (typeof QRCode !== 'undefined' && qrUrl) {
+    try {
+      new QRCode(d, { text: qrUrl, width: size, height: size,
+        colorDark: '#2D3748', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    } catch(e) {}
+  }
+  setTimeout(cb, 280);
+}
+
+function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   const W = 1011, H = 638;
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // — Background gradient —
+  // Background gradient
   const grad = ctx.createLinearGradient(0, 0, W, H);
   grad.addColorStop(0, '#3D6B5C');
   grad.addColorStop(0.55, '#5B8A7A');
   grad.addColorStop(1, '#7BA99A');
   ctx.fillStyle = grad;
-  ctxRoundRect(ctx, 0, 0, W, H, 36);
-  ctx.fill();
+  ctxRoundRect(ctx, 0, 0, W, H, 36); ctx.fill();
 
-  // — Decorative circles (subtle) —
-  ctx.save();
-  ctx.globalAlpha = 0.08;
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.arc(W * 0.85, H * -0.1, 280, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(W * 0.9,  H * 0.95, 200, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(W * 0.02, H * 0.85, 160, 0, Math.PI * 2); ctx.fill();
+  // Decorative circles
+  ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(W*0.85, H*-0.1, 280, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*0.9, H*0.95, 200, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*0.02, H*0.85, 160, 0, Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // — Top stripe —
-  ctx.save();
-  ctx.globalAlpha = 0.12;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, W, 90);
-  ctx.restore();
+  // Top stripe
+  ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, 90); ctx.restore();
 
-  // — Logo & Title (top left) —
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${highRes?56:56}px 'Sarabun', sans-serif`;
+  // QR (right side) — white bg first
+  const qrSize = 230;
+  const qrX = W - qrSize - 44;
+  const qrY = 130;
+  ctx.fillStyle = '#fff';
+  ctxRoundRect(ctx, qrX-12, qrY-12, qrSize+24, qrSize+24, 14); ctx.fill();
+
+  // Draw pre-rendered QR from hidden div
+  const hiddenDiv = document.getElementById('wd-qr-hidden');
+  if (hiddenDiv) {
+    const qrEl = hiddenDiv.querySelector('canvas') || hiddenDiv.querySelector('img');
+    if (qrEl) { try { ctx.drawImage(qrEl, qrX, qrY, qrSize, qrSize); } catch(e) {} }
+  }
+
+  // "แสกน QR" label below QR box
+  ctx.font = `26px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.72; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.fillText('แสกน QR เพื่อดูรายละเอียด', qrX + qrSize/2, qrY + qrSize + 34);
+  ctx.textAlign = 'left'; ctx.globalAlpha = 1;
+
+  // Text right boundary (don't overlap QR)
+  const textRight = qrX - 22;
+
+  // Logo
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold 56px 'Sarabun', sans-serif`;
   ctx.fillText('🌿 สมุดเบาใจ', 52, 62);
-
-  ctx.font = `${36}px 'Sarabun', sans-serif`;
+  ctx.font = `36px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.82;
-  ctx.fillStyle = '#ffffff';
   ctx.fillText('บันทึกเพื่อการวางแผนดูแลสุขภาพล่วงหน้า', 52, 108);
   ctx.globalAlpha = 1;
 
-  // — Divider line —
-  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(52, 126); ctx.lineTo(W - 52, 126); ctx.stroke();
+  // Divider
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(52, 126); ctx.lineTo(W-52, 126); ctx.stroke();
 
-  // — Name —
+  // Name (truncated to fit left column)
   const p = bookData.personal || {};
-  const displayName = p.fullName || (currentFirstName + ' ' + currentLastName).trim() || '—';
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold 58px 'Sarabun', sans-serif`;
-  ctx.fillText(displayName, 52, 200);
+  const displayName = p.fullName || (currentFirstName+' '+currentLastName).trim() || '—';
+  ctx.font = `bold 56px 'Sarabun', sans-serif`; ctx.fillStyle = '#fff';
+  ctx.fillText(wdTruncate(ctx, displayName, textRight - 52), 52, 200);
 
-  // — Sub info (proxy / hospital) —
-  const lines = [];
-  if (p.proxyName) lines.push(`ผู้ตัดสินใจแทน: ${p.proxyName}  ${p.proxyPhone ? '📞 ' + p.proxyPhone : ''}`);
-  if (p.regularHospital) lines.push(`🏥 ${p.regularHospital}`);
-  ctx.font = `34px 'Sarabun', sans-serif`;
-  ctx.globalAlpha = 0.9;
-  lines.forEach((ln, i) => ctx.fillText(ln, 52, 258 + i * 48));
+  // Sub info (truncated)
+  ctx.font = `32px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88;
+  let infoY = 252;
+  if (p.proxyName) {
+    const ln = `ผู้ตัดสินใจแทน: ${p.proxyName}${p.proxyPhone ? '  📞 '+p.proxyPhone : ''}`;
+    ctx.fillText(wdTruncate(ctx, ln, textRight - 52), 52, infoY); infoY += 46;
+  }
+  if (p.regularHospital) {
+    ctx.fillText(wdTruncate(ctx, '🏥 '+p.regularHospital, textRight - 52), 52, infoY);
+  }
   ctx.globalAlpha = 1;
 
-  // — PIN info area (bottom left) —
-  const pinY = H - 120;
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(52, pinY - 24); ctx.lineTo(W * 0.55, pinY - 24); ctx.stroke();
+  // PIN area (bottom)
+  const pinY = H - 130;
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(52, pinY-20); ctx.lineTo(W-52, pinY-20); ctx.stroke();
 
-  ctx.font = `bold 30px 'Sarabun', sans-serif`;
-  ctx.globalAlpha = 0.7;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText('รหัสเข้าถึงข้อมูล', 52, pinY + 10);
+  ctx.font = `bold 28px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.65; ctx.fillStyle = '#fff';
+  ctx.fillText('รหัสเข้าถึงข้อมูล', 52, pinY + 8);
   ctx.globalAlpha = 1;
 
-  ctx.font = `36px 'Sarabun', sans-serif`;
   if (pinOpt === 'show') {
-    ctx.fillStyle = '#FFE066';
-    ctx.font = `bold 42px 'Sarabun', sans-serif`;
-    ctx.fillText(currentPinOnly || '------', 52, pinY + 60);
+    ctx.font = `bold 40px 'Sarabun', sans-serif`; ctx.fillStyle = '#FFE066';
+    ctx.fillText('ติดต่อผู้รู้รหัส: '+(currentPinOnly || '------'), 52, pinY + 58);
   } else if (pinOpt === 'contact') {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(contactText || 'ติดต่อผู้ที่รู้รหัส', 52, pinY + 60);
+    ctx.font = `bold 32px 'Sarabun', sans-serif`; ctx.fillStyle = '#fff';
+    ctx.fillText('ติดต่อผู้รู้รหัส: '+(contactText||'—'), 52, pinY + 58);
   } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.fillText('กรุณาติดต่อเจ้าของบัตร', 52, pinY + 60);
+    ctx.font = `32px 'Sarabun', sans-serif`;
+    ctx.globalAlpha = 0.65; ctx.fillStyle = '#fff';
+    ctx.fillText('ติดต่อผู้รู้รหัส: เจ้าของบัตรโดยตรง', 52, pinY + 58);
+    ctx.globalAlpha = 1;
   }
 
-  // — Scan instruction —
-  ctx.font = `28px 'Sarabun', sans-serif`;
-  ctx.globalAlpha = 0.72;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText('แสกน QR เพื่อดูรายละเอียด', W * 0.56, pinY + 10);
+  // URL bottom-left
+  ctx.font = `22px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff';
+  ctx.fillText(window.location.origin + window.location.pathname, 52, H-24);
   ctx.globalAlpha = 1;
+}
 
-  // — QR Code (right side) —
-  const qrSize = 220;
-  const qrX = W - qrSize - 60;
-  const qrY = 155;
-
-  // White rounded bg for QR
-  ctx.fillStyle = '#ffffff';
-  ctxRoundRect(ctx, qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 16);
-  ctx.fill();
-
-  // Generate QR to hidden div then draw onto canvas
-  const hiddenDiv = document.getElementById('wd-qr-hidden');
-  hiddenDiv.innerHTML = '';
-  if (typeof QRCode !== 'undefined' && qrUrl) {
-    try {
-      new QRCode(hiddenDiv, {
-        text: qrUrl,
-        width: qrSize, height: qrSize,
-        colorDark: '#2D3748', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-      const qrImg = hiddenDiv.querySelector('img') || hiddenDiv.querySelector('canvas');
-      if (qrImg) {
-        const drawQR = () => {
-          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-        };
-        if (qrImg.tagName === 'IMG') {
-          if (qrImg.complete) drawQR();
-          else qrImg.onload = drawQR;
-        } else {
-          drawQR();
-        }
-      }
-    } catch(e) { /* QR generation error, skip */ }
-  }
-
-  // — Website URL (very bottom) —
-  ctx.font = `24px 'Sarabun', sans-serif`;
-  ctx.globalAlpha = 0.55;
-  ctx.fillStyle = '#ffffff';
-  const urlText = window.location.origin + window.location.pathname;
-  ctx.fillText(urlText, 52, H - 28);
-  ctx.globalAlpha = 1;
+function wdTruncate(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t+'…').width > maxWidth) t = t.slice(0,-1);
+  return t + '…';
 }
 
 function ctxRoundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
   ctx.closePath();
 }
 
 function downloadWalletPNG() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
-  const qrUrl = getQRUrl();
-
-  // Create a fresh off-screen canvas at full 1011×638 res
-  const offCanvas = document.createElement('canvas');
-  drawWalletCard(offCanvas, opt, contactText, qrUrl, true);
-
-  // QR is async (img.onload), wait 600ms then download
-  setTimeout(() => {
-    const a = document.createElement('a');
-    const p = bookData.personal || {};
-    const name = (p.fullName || (currentFirstName + '_' + currentLastName)).replace(/\s+/g, '_') || 'sabajai';
-    a.download = `sabajai_card_${name}.png`;
-    a.href = offCanvas.toDataURL('image/png');
-    a.click();
-  }, 600);
+  // Pre-render QR then draw off-screen canvas
+  wdPreRenderQR(getQRUrl(), 230, () => {
+    const offCanvas = document.createElement('canvas');
+    drawWalletCard(offCanvas, opt, contactText, true);
+    setTimeout(() => {
+      const a = document.createElement('a');
+      const p = bookData.personal || {};
+      const name = (p.fullName||(currentFirstName+'_'+currentLastName)).replace(/\s+/g,'_')||'sabajai';
+      a.download = `sabajai_card_${name}.png`;
+      a.href = offCanvas.toDataURL('image/png');
+      a.click();
+    }, 100);
+  });
 }
 
 // legacy stub (button already changed to showWalletCardDesigner)
