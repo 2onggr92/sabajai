@@ -788,21 +788,63 @@ textarea { resize: vertical; min-height: 80px; }
       <div class="qr-actions">
         <button class="btn btn-secondary" onclick="downloadQR()">⬇️ บันทึก QR</button>
         <button class="btn btn-secondary" onclick="copyLink()">🔗 คัดลอก Link</button>
-        <button class="btn btn-secondary" onclick="printWalletCard()">💳 บัตรพกพา</button>
+        <button class="btn btn-secondary" onclick="showWalletCardDesigner()">💳 บัตรพกพา</button>
         <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์</button>
         <button class="btn btn-primary" onclick="editFromSummary()">✏️ แก้ไขข้อมูล</button>
       </div>
     </div>
 
-    <div id="wallet-card-section" style="display:none;">
-      <div class="wallet-card">
-        <div class="wc-title">🌿 สมุดเบาใจ</div>
-        <div id="wc-name"></div>
-        <div id="wc-proxy"></div>
-        <div style="margin-top:10px;font-size:11px;opacity:0.7;">แสกน QR เพื่อดูรายละเอียดทั้งหมด</div>
-        <div id="wc-qr" style="margin-top:10px;background:white;border-radius:8px;padding:8px;display:inline-block;"></div>
+    <!-- WALLET CARD DESIGNER MODAL -->
+    <div id="wallet-designer" style="display:none;position:fixed;inset:0;background:rgba(45,55,72,0.7);z-index:999;overflow-y:auto;padding:20px;">
+      <div style="background:white;border-radius:16px;max-width:520px;margin:0 auto;padding:28px;box-shadow:var(--shadow-lg);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:700;color:var(--sage-dark);">💳 บัตรพกพา</h3>
+          <button onclick="closeWalletDesigner()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-light);line-height:1;">×</button>
+        </div>
+
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:18px;">ขนาดบัตรเครดิต 85.6×54mm · 300 DPI · พร้อมส่งร้านปริ้นท์</p>
+
+        <!-- PIN OPTION -->
+        <div style="margin-bottom:18px;">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;">รหัสเข้าถึงข้อมูล (PIN)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;" id="wdopt-hide-label">
+              <input type="radio" name="wdPinOpt" value="hide" checked onchange="walletDesignerUpdate()" style="accent-color:var(--sage);">
+              <span>🔒 ไม่แสดงรหัส</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;" id="wdopt-show-label">
+              <input type="radio" name="wdPinOpt" value="show" onchange="walletDesignerUpdate()" style="accent-color:var(--sage);">
+              <span>👁️ แสดงรหัสบนบัตร</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;" id="wdopt-contact-label">
+              <input type="radio" name="wdPinOpt" value="contact" onchange="walletDesignerUpdate()" style="accent-color:var(--sage);">
+              <span>📞 ระบุผู้ที่รู้รหัส</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- CONTACT INPUT (shown only when "contact" selected) -->
+        <div id="wd-contact-section" style="display:none;margin-bottom:18px;">
+          <label style="font-size:13px;color:var(--text-light);display:block;margin-bottom:6px;">ชื่อ + เบอร์โทรผู้ที่รู้รหัส</label>
+          <input type="text" id="wd-contact-input" placeholder="เช่น ลูกสาว โทร 081-234-5678" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;" oninput="walletDesignerUpdate()">
+        </div>
+
+        <!-- CANVAS PREVIEW -->
+        <div style="margin-bottom:18px;text-align:center;">
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">ตัวอย่างบัตร (พรีวิว)</div>
+          <canvas id="wallet-canvas" style="width:100%;max-width:400px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:block;margin:0 auto;"></canvas>
+        </div>
+
+        <!-- ACTIONS -->
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="downloadWalletPNG()">⬇️ ดาวน์โหลด PNG</button>
+          <button class="btn btn-secondary" onclick="closeWalletDesigner()">ปิด</button>
+        </div>
       </div>
     </div>
+
+    <!-- hidden QR generator for wallet card -->
+    <div id="wd-qr-hidden" style="position:absolute;left:-9999px;top:-9999px;"></div>
 
   </div>
 </div>
@@ -1367,19 +1409,216 @@ function copyLink() {
   navigator.clipboard.writeText(url).then(() => { alert('✅ คัดลอก link แล้ว! ส่งให้ครอบครัวทาง LINE ได้เลย'); }).catch(() => { prompt('คัดลอก link นี้:', url); });
 }
 
-function printWalletCard() {
-  const p = bookData.personal || {};
-  const sec = document.getElementById('wallet-card-section');
-  document.getElementById('wc-name').textContent = p.fullName || '';
-  document.getElementById('wc-proxy').innerHTML = p.proxyName ? `ผู้ตัดสินใจแทน: <strong>${p.proxyName}</strong> โทร ${p.proxyPhone || '—'}` : '';
-  const wqr = document.getElementById('wc-qr');
-  wqr.innerHTML = '';
-  if (typeof QRCode !== 'undefined') {
-    new QRCode(wqr, { text: window.location.href, width: 100, height: 100, colorDark: '#2D3748', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-  }
-  sec.style.display = 'block';
-  setTimeout(() => window.print(), 500);
+// ═══════════════════ WALLET CARD DESIGNER ═══════════════════
+function showWalletCardDesigner() {
+  document.getElementById('wallet-designer').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // slight delay to let modal render, then draw
+  setTimeout(() => walletDesignerUpdate(), 80);
 }
+
+function closeWalletDesigner() {
+  document.getElementById('wallet-designer').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function walletDesignerUpdate() {
+  const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
+  document.getElementById('wd-contact-section').style.display = opt === 'contact' ? 'block' : 'none';
+  // highlight selected radio card
+  ['hide','show','contact'].forEach(v => {
+    const lbl = document.getElementById('wdopt-'+v+'-label');
+    if (lbl) lbl.style.borderColor = opt === v ? 'var(--sage)' : 'var(--border)';
+    if (lbl) lbl.style.background = opt === v ? 'var(--sage-bg)' : '';
+  });
+  renderWalletPreview();
+}
+
+function renderWalletPreview() {
+  const canvas = document.getElementById('wallet-canvas');
+  const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
+  const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
+  const qrUrl = getQRUrl();
+  drawWalletCard(canvas, opt, contactText, qrUrl, false);
+}
+
+function drawWalletCard(canvas, pinOpt, contactText, qrUrl, highRes) {
+  // Credit card: 85.6 × 54 mm at 300 DPI = 1011 × 638 px
+  const W = 1011, H = 638;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // — Background gradient —
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#3D6B5C');
+  grad.addColorStop(0.55, '#5B8A7A');
+  grad.addColorStop(1, '#7BA99A');
+  ctx.fillStyle = grad;
+  ctxRoundRect(ctx, 0, 0, W, H, 36);
+  ctx.fill();
+
+  // — Decorative circles (subtle) —
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(W * 0.85, H * -0.1, 280, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W * 0.9,  H * 0.95, 200, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W * 0.02, H * 0.85, 160, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  // — Top stripe —
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, 90);
+  ctx.restore();
+
+  // — Logo & Title (top left) —
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${highRes?56:56}px 'Sarabun', sans-serif`;
+  ctx.fillText('🌿 สมุดเบาใจ', 52, 62);
+
+  ctx.font = `${36}px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.82;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('บันทึกเพื่อการวางแผนดูแลสุขภาพล่วงหน้า', 52, 108);
+  ctx.globalAlpha = 1;
+
+  // — Divider line —
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(52, 126); ctx.lineTo(W - 52, 126); ctx.stroke();
+
+  // — Name —
+  const p = bookData.personal || {};
+  const displayName = p.fullName || (currentFirstName + ' ' + currentLastName).trim() || '—';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold 58px 'Sarabun', sans-serif`;
+  ctx.fillText(displayName, 52, 200);
+
+  // — Sub info (proxy / hospital) —
+  const lines = [];
+  if (p.proxyName) lines.push(`ผู้ตัดสินใจแทน: ${p.proxyName}  ${p.proxyPhone ? '📞 ' + p.proxyPhone : ''}`);
+  if (p.regularHospital) lines.push(`🏥 ${p.regularHospital}`);
+  ctx.font = `34px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.9;
+  lines.forEach((ln, i) => ctx.fillText(ln, 52, 258 + i * 48));
+  ctx.globalAlpha = 1;
+
+  // — PIN info area (bottom left) —
+  const pinY = H - 120;
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(52, pinY - 24); ctx.lineTo(W * 0.55, pinY - 24); ctx.stroke();
+
+  ctx.font = `bold 30px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('รหัสเข้าถึงข้อมูล', 52, pinY + 10);
+  ctx.globalAlpha = 1;
+
+  ctx.font = `36px 'Sarabun', sans-serif`;
+  if (pinOpt === 'show') {
+    ctx.fillStyle = '#FFE066';
+    ctx.font = `bold 42px 'Sarabun', sans-serif`;
+    ctx.fillText(currentPinOnly || '------', 52, pinY + 60);
+  } else if (pinOpt === 'contact') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(contactText || 'ติดต่อผู้ที่รู้รหัส', 52, pinY + 60);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillText('กรุณาติดต่อเจ้าของบัตร', 52, pinY + 60);
+  }
+
+  // — Scan instruction —
+  ctx.font = `28px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.72;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('แสกน QR เพื่อดูรายละเอียด', W * 0.56, pinY + 10);
+  ctx.globalAlpha = 1;
+
+  // — QR Code (right side) —
+  const qrSize = 220;
+  const qrX = W - qrSize - 60;
+  const qrY = 155;
+
+  // White rounded bg for QR
+  ctx.fillStyle = '#ffffff';
+  ctxRoundRect(ctx, qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 16);
+  ctx.fill();
+
+  // Generate QR to hidden div then draw onto canvas
+  const hiddenDiv = document.getElementById('wd-qr-hidden');
+  hiddenDiv.innerHTML = '';
+  if (typeof QRCode !== 'undefined' && qrUrl) {
+    try {
+      new QRCode(hiddenDiv, {
+        text: qrUrl,
+        width: qrSize, height: qrSize,
+        colorDark: '#2D3748', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      const qrImg = hiddenDiv.querySelector('img') || hiddenDiv.querySelector('canvas');
+      if (qrImg) {
+        const drawQR = () => {
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        };
+        if (qrImg.tagName === 'IMG') {
+          if (qrImg.complete) drawQR();
+          else qrImg.onload = drawQR;
+        } else {
+          drawQR();
+        }
+      }
+    } catch(e) { /* QR generation error, skip */ }
+  }
+
+  // — Website URL (very bottom) —
+  ctx.font = `24px 'Sarabun', sans-serif`;
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = '#ffffff';
+  const urlText = window.location.origin + window.location.pathname;
+  ctx.fillText(urlText, 52, H - 28);
+  ctx.globalAlpha = 1;
+}
+
+function ctxRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function downloadWalletPNG() {
+  const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
+  const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
+  const qrUrl = getQRUrl();
+
+  // Create a fresh off-screen canvas at full 1011×638 res
+  const offCanvas = document.createElement('canvas');
+  drawWalletCard(offCanvas, opt, contactText, qrUrl, true);
+
+  // QR is async (img.onload), wait 600ms then download
+  setTimeout(() => {
+    const a = document.createElement('a');
+    const p = bookData.personal || {};
+    const name = (p.fullName || (currentFirstName + '_' + currentLastName)).replace(/\s+/g, '_') || 'sabajai';
+    a.download = `sabajai_card_${name}.png`;
+    a.href = offCanvas.toDataURL('image/png');
+    a.click();
+  }, 600);
+}
+
+// legacy stub (button already changed to showWalletCardDesigner)
+function printWalletCard() { showWalletCardDesigner(); }
 
 function editBook() {
   const p = bookData.personal || {}, lv = bookData.lifeView || {}, m = bookData.medical || {}, c = bookData.care || {}, e = bookData.estate || {};
