@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมุดเบาใจ — บันทึกเพื่อการวางแผนดูแลสุขภาพล่วงหน้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #F7F4EE;
+  --white: #FFFFFF;
+  --sage: #5B8A7A;
+  --sage-light: #7BA99A;
+  --sage-dark: #3D6B5C;
+  --sage-bg: #EFF5F3;
+  --terra: #C8896A;
+  --terra-light: #FAEEE6;
+  --text: #2D3748;
+  --text-light: #718096;
+  --border: #DDD9D0;
+  --shadow: 0 2px 12px rgba(91,138,122,0.10);
+  --shadow-lg: 0 8px 32px rgba(45,55,72,0.12);
+  --radius: 12px;
+}
+body { font-family: 'Sarabun', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; font-size: 16px; line-height: 1.75; }
+
+/* TOP BAR */
+.topbar { background: var(--sage); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.topbar-brand { display: flex; align-items: center; gap: 10px; color: white; font-size: 19px; font-weight: 600; }
+.topbar-sub { color: rgba(255,255,255,0.75); font-size: 12px; }
+.btn-home { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 7px 14px; border-radius: 8px; font-family: 'Sarabun', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.btn-home:hover { background: rgba(255,255,255,0.25); }
+
+/* PROGRESS */
+.progress-wrap { background: var(--white); padding: 16px 24px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.progress-steps { display: flex; align-items: center; max-width: 700px; margin: 0 auto; }
+.step-dot { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; position: relative; }
+.step-dot::before { content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
+.step-dot:last-child::before { display: none; }
+.step-circle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-light); position: relative; z-index: 1; transition: all 0.3s; }
+.step-dot.active .step-circle { border-color: var(--sage); background: var(--sage); color: white; }
+.step-dot.done .step-circle { border-color: var(--sage-light); background: var(--sage-light); color: white; }
+.step-dot.done::before { background: var(--sage-light); }
+.step-label { font-size: 10px; color: var(--text-light); text-align: center; font-weight: 500; white-space: nowrap; }
+.step-dot.active .step-label { color: var(--sage-dark); font-weight: 700; }
+
+/* MAIN */
+.main { max-width: 700px; margin: 0 auto; padding: 28px 20px 100px; }
+.section-header { margin-bottom: 22px; }
+.section-header h2 { font-size: 22px; font-weight: 700; color: var(--sage-dark); margin-bottom: 4px; }
+.section-header p { font-size: 14px; color: var(--text-light); }
+
+/* CARD */
+.card { background: var(--white); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid rgba(221,217,208,0.7); }
+.card-title { font-size: 14px; font-weight: 700; color: var(--sage-dark); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+/* FORM */
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+label.field-label { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.optional { font-weight: 400; color: var(--text-light); font-size: 12px; }
+input[type="text"], input[type="tel"], input[type="date"], input[type="email"], select, textarea {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'Sarabun', sans-serif; font-size: 15px; color: var(--text); background: var(--white);
+  transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(91,138,122,0.12); }
+textarea { resize: vertical; min-height: 80px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 500px) { .row-2 { grid-template-columns: 1fr; } }
+
+/* CHECKBOXES */
+.check-group { display: flex; flex-direction: column; gap: 8px; }
+.check-item { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 10px 14px; border-radius: 8px; border: 1.5px solid var(--border); transition: all 0.2s; background: var(--cream); }
+.check-item:hover { border-color: var(--sage-light); background: var(--sage-bg); }
+.check-item input[type="checkbox"] { width: 17px; height: 17px; flex-shrink: 0; margin-top: 3px; accent-color: var(--sage); cursor: pointer; }
+.check-item.checked { border-color: var(--sage); background: var(--sage-bg); }
+.check-label { font-size: 14px; line-height: 1.5; }
+.check-sub { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+/* RADIO */
+.radio-group { display: flex; flex-direction: column; gap: 8px; }
+.radio-card { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 8px; border: 1.5px solid var(--border); cursor: pointer; transition: all 0.2s; background: var(--cream); }
+.radio-card:hover { border-color: var(--sage-light); }
+.radio-card input[type="radio"] { width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px; accent-color: var(--sage); }
+.radio-card.selected { border-color: var(--sage); background: var(--sage-bg); }
+.radio-row { flex-direction: row; gap: 8px; }
+.radio-row .radio-card { flex: 1; }
+
+/* PRIORITY RANKING */
+.priority-group { display: flex; flex-direction: column; gap: 6px; }
+.priority-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--cream); }
+.priority-item select { width: 70px; flex-shrink: 0; padding: 4px 8px; font-size: 14px; border-radius: 6px; }
+.priority-label { font-size: 14px; flex: 1; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; font-family: 'Sarabun', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+.btn-primary { background: var(--sage); color: white; box-shadow: 0 2px 8px rgba(91,138,122,0.3); }
+.btn-primary:hover { background: var(--sage-dark); transform: translateY(-1px); }
+.btn-secondary { background: var(--white); color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { border-color: var(--sage); color: var(--sage); }
+.btn-terra { background: var(--terra); color: white; box-shadow: 0 2px 8px rgba(200,137,106,0.3); }
+.btn-terra:hover { background: #B5764F; }
+.nav-buttons { display: flex; gap: 12px; margin-top: 28px; justify-content: space-between; }
+
+/* QUOTE */
+.quote-box { background: linear-gradient(135deg, var(--sage-bg), var(--cream)); border-left: 4px solid var(--sage); border-radius: 8px; padding: 14px 18px; margin-bottom: 18px; font-size: 14px; color: var(--sage-dark); font-style: italic; line-height: 1.7; }
+.legal-note { background: #FEF9E7; border: 1px solid #F0D060; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #7D6608; margin-bottom: 16px; line-height: 1.6; }
+.alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+.alert.error { background: #FEF0ED; color: #C0392B; border: 1px solid #E8A09A; }
+
+/* STEP PANELS */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* ═══════════ VIEWER ═══════════ */
+#viewerApp { display: none; }
+.viewer-hero { background: linear-gradient(160deg, var(--sage-dark) 0%, var(--sage) 100%); color: white; padding: 48px 24px 36px; text-align: center; }
+.viewer-hero .lotus { font-size: 52px; margin-bottom: 16px; }
+.viewer-hero h1 { font-size: 30px; font-weight: 700; letter-spacing: 0.03em; margin-bottom: 6px; }
+.viewer-hero .name { font-size: 20px; font-weight: 300; opacity: 0.9; }
+.viewer-hero .date-line { font-size: 12px; opacity: 0.65; margin-top: 10px; }
+
+.viewer-body { max-width: 760px; margin: 0 auto; padding: 24px 20px 60px; }
+.v-card { background: var(--white); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.v-card-head { background: linear-gradient(135deg, var(--sage), var(--sage-light)); color: white; padding: 13px 20px; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.v-card-head.purple { background: linear-gradient(135deg, #9B7DB0, #B08EC0); }
+.v-card-head.terra { background: linear-gradient(135deg, var(--terra), var(--terra-light)); color: var(--text); }
+.v-card-body { padding: 20px; }
+
+.v-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+.v-row:last-child { margin-bottom: 0; }
+.v-lbl { font-weight: 600; color: var(--text-light); min-width: 140px; font-size: 12px; padding-top: 3px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.03em; }
+.v-val { color: var(--text); flex: 1; font-size: 15px; }
+.v-section-title { font-weight: 700; color: var(--sage-dark); font-size: 13px; margin: 14px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.v-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+.tag { display: inline-block; background: var(--sage-bg); color: var(--sage-dark); border: 1px solid var(--sage-light); border-radius: 20px; padding: 3px 12px; font-size: 13px; font-weight: 500; margin: 3px 4px 3px 0; }
+.tag.red { background: #FEF2F0; color: #C0392B; border-color: #E8A09A; }
+.tag.yellow { background: #FEF9E7; color: #9B6B0C; border-color: #F0D060; }
+.tag.purple { background: #F5F0FF; color: #6B46C1; border-color: #B794F4; }
+
+.directive-main { border: 2px solid var(--sage); border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; background: var(--sage-bg); }
+.directive-main.warning { border-color: #F0D060; background: #FEF9E7; }
+.directive-main .dm-label { font-size: 11px; font-weight: 700; color: var(--sage-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.directive-main.warning .dm-label { color: #9B6B0C; }
+.directive-main .dm-text { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.6; }
+
+.check-list-v { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.check-list-v .cli { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; }
+.check-list-v .cli .icon { flex-shrink: 0; }
+
+.message-box { background: linear-gradient(135deg, #FEF9F0, #FDF5E8); border: 1px solid #E8D5A0; border-radius: 10px; padding: 18px 20px; font-size: 15px; line-height: 1.85; white-space: pre-wrap; color: var(--text); }
+
+/* QR SECTION */
+.qr-section { background: var(--white); border-radius: var(--radius); padding: 28px; text-align: center; box-shadow: var(--shadow-lg); border: 1px solid var(--border); margin-bottom: 20px; }
+.qr-section h3 { font-size: 18px; font-weight: 700; color: var(--sage-dark); margin-bottom: 6px; }
+.qr-section p { font-size: 13px; color: var(--text-light); margin-bottom: 18px; }
+#qrcode-display { display: inline-block; padding: 14px; background: white; border-radius: 12px; border: 2px solid var(--border); margin-bottom: 18px; }
+.qr-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* LANDING */
+#landingApp { display: none; }
+.landing-hero { text-align: center; padding: 60px 24px 40px; }
+.landing-hero .lotus { font-size: 72px; margin-bottom: 20px; }
+.landing-hero h1 { font-size: 34px; font-weight: 700; color: var(--sage-dark); margin-bottom: 12px; }
+.landing-hero p { font-size: 16px; color: var(--text-light); max-width: 480px; margin: 0 auto 32px; line-height: 1.75; }
+
+/* WALLET CARD */
+.wallet-card { background: linear-gradient(135deg, var(--sage-dark), var(--sage)); color: white; border-radius: 16px; padding: 20px; max-width: 340px; margin: 0 auto 12px; font-size: 13px; line-height: 1.7; }
+.wallet-card .wc-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 8px; }
+
+/* PIN */
+.pin-input { letter-spacing: 0.3em; font-size: 22px; text-align: center; font-weight: 700; }
+.pin-card { border: 2px dashed var(--sage) !important; background: var(--sage-bg) !important; }
+
+/* TOPBAR USER */
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar-name { color: rgba(255,255,255,0.95); font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 6px; }
+.btn-save-top { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 6px; font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-save-top:hover { background: rgba(255,255,255,0.35); }
+
+/* TOAST */
+#toast-msg { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #2D3748; color: white; padding: 10px 22px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+
+/* STEP DOT CLICKABLE */
+.step-dot { cursor: pointer; }
+
+/* QR LANDING */
+#qrLandingApp { display: none; }
+.qr-landing-wrap { max-width: 400px; margin: 60px auto; padding: 0 20px; text-align: center; }
+.qr-landing-wrap .lotus { font-size: 56px; margin-bottom: 16px; }
+.qr-landing-wrap h2 { font-size: 20px; color: var(--text-light); font-weight: 400; margin-bottom: 4px; }
+.qr-landing-wrap h1 { font-size: 26px; font-weight: 700; color: var(--sage-dark); margin-bottom: 24px; }
+
+@media print {
+  .topbar, .progress-wrap, .nav-buttons, .qr-actions, .btn-home { display: none !important; }
+  body { background: white; }
+  .viewer-body { padding: 0; }
+  .v-card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; margin-bottom: 12px; }
+  .qr-section { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <span>🌿</span>
+    <div>
+      <div>สมุดเบาใจ</div>
+      <div class="topbar-sub">Peaceful Death · beachai.org · ม.12 พ.ร.บ.สุขภาพ 2550</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="topbar-name" style="display:none;" class="topbar-name"></span>
+    <button id="topbar-save" style="display:none;" class="btn-save-top" onclick="quickSave()">💾 บันทึก</button>
+    <button class="btn-home" onclick="resetToLanding()">🏠 หน้าแรก</button>
+  </div>
+</div>
+<div id="toast-msg"></div>
+
+<!-- ═══════════════════ LANDING ═══════════════════ -->
+<div id="landingApp">
+  <div class="landing-hero">
+    <div class="lotus">🪷</div>
+    <h1>สมุดเบาใจของคุณ</h1>
+    <p>บันทึกความต้องการของคุณไว้ล่วงหน้า เพื่อให้คนที่คุณรักไม่ต้องเดาใจในวันที่คุณพูดไม่ได้</p>
+    <button class="btn btn-primary" onclick="startNew()" style="font-size:16px;padding:14px 36px;margin-bottom:12px;">
+      ✏️ สร้างสมุดเบาใจของฉัน
+    </button>
+    <p style="font-size:13px;color:var(--text-light);">
+      ข้อมูลทั้งหมดเข้ารหัสใน QR code — ไม่ผ่านเซิร์ฟเวอร์ ไม่มีบุคคลที่สาม
+    </p>
+  </div>
+  <div style="max-width:680px;margin:0 auto;padding:0 20px 16px;">
+    <div class="card pin-card">
+      <div class="card-title">🔐 โหลดข้อมูลด้วย User ID + PIN</div>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:14px;">มีข้อมูลแล้ว? กรอกชื่อ นามสกุล และ PIN 6 หลัก เพื่อโหลดและแก้ไขจากทุกอุปกรณ์</p>
+      <div class="row-2" style="margin-bottom:8px;">
+        <input type="text" id="landing-firstname" placeholder="ชื่อ (ภาษาไทย)">
+        <input type="text" id="landing-lastname" placeholder="นามสกุล (ภาษาไทย)">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="landing-pin" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="pin-input" placeholder="000000" style="flex:1;">
+        <button class="btn btn-primary" onclick="loadByPin()" style="white-space:nowrap;">📂 โหลด</button>
+      </div>
+      <div id="pin-status" style="font-size:13px;min-height:20px;"></div>
+    </div>
+  </div>
+  <div style="max-width:680px;margin:0 auto;padding:0 20px 60px;">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">📖 สมุดเบาใจคืออะไร?</div>
+      <p style="font-size:14px;color:var(--text-light);line-height:1.8;">
+        สมุดเบาใจเป็นเครื่องมือวางแผนดูแลล่วงหน้า (Advance Care Planning) จากกลุ่ม <strong>Peaceful Death</strong> ช่วยให้คุณสื่อสารเจตนาเกี่ยวกับการดูแลสุขภาพช่วงสุดท้ายให้ครอบครัวและทีมสุขภาพรับทราบ มีผลทางกฎหมายตาม <strong>พ.ร.บ.สุขภาพแห่งชาติ พ.ศ. 2550 มาตรา 12</strong>
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 เนื้อหา 5 หมวด</div>
+      <div style="font-size:14px;color:var(--text-light);line-height:2;">
+        1️⃣ ข้อมูลส่วนตัวและผู้ตัดสินใจแทน<br>
+        2️⃣ มุมมองต่อชีวิต ความตาย และคุณค่าที่สำคัญ<br>
+        3️⃣ หนังสือแสดงเจตนาเลือกวิธีการรักษา<br>
+        4️⃣ การดูแลที่ต้องการและการสื่อสาร<br>
+        5️⃣ การจัดการร่างกายและงานศพ
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ FORM ═══════════════════ -->
+<div id="formApp" style="display:none;">
+  <div class="progress-wrap">
+    <div class="progress-steps">
+      <div class="step-dot active" id="sdot-1" onclick="goStepDirect(1)"><div class="step-circle">1</div><div class="step-label">ข้อมูลตัวเอง</div></div>
+      <div class="step-dot" id="sdot-2" onclick="goStepDirect(2)"><div class="step-circle">2</div><div class="step-label">มุมมองชีวิต</div></div>
+      <div class="step-dot" id="sdot-3" onclick="goStepDirect(3)"><div class="step-circle">3</div><div class="step-label">แสดงเจตนา</div></div>
+      <div class="step-dot" id="sdot-4" onclick="goStepDirect(4)"><div class="step-circle">4</div><div class="step-label">การดูแล</div></div>
+      <div class="step-dot" id="sdot-5" onclick="goStepDirect(5)"><div class="step-circle">5</div><div class="step-label">งานศพ</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="alert-box" class="alert" style="display:none;"></div>
+
+    <!-- ══ STEP 1: ข้อมูลส่วนตัว ══ -->
+    <div class="step-panel active" id="step-1">
+      <div class="section-header">
+        <h2>🪪 ข้อมูลส่วนตัว</h2>
+        <p>ข้อมูลพื้นฐาน ผู้ตัดสินใจแทน และแพทย์ประจำตัว</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👤 ข้อมูลเบื้องต้น</div>
+        <div class="field">
+          <label class="field-label">ชื่อ-นามสกุล *</label>
+          <input type="text" id="fullName" placeholder="ชื่อ นามสกุล">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">ชื่อที่คนอื่นเรียก <span class="optional">(ชื่อเล่น)</span></label>
+            <input type="text" id="nickname" placeholder="ชื่อเล่น">
+          </div>
+          <div class="field">
+            <label class="field-label">วันเกิด</label>
+            <input type="date" id="birthDate">
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">เลขบัตรประชาชน <span class="optional">(ถ้าต้องการ)</span></label>
+            <input type="text" id="idNumber" placeholder="X-XXXX-XXXXX-XX-X" maxlength="17">
+          </div>
+          <div class="field">
+            <label class="field-label">หมู่เลือด</label>
+            <select id="bloodType">
+              <option value="">— เลือก —</option>
+              <option>A</option><option>B</option><option>AB</option><option>O</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">ที่อยู่ปัจจุบัน</label>
+          <textarea id="address" rows="2" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">โรงพยาบาลที่ใช้บริการประจำ</label>
+          <input type="text" id="regularHospital" placeholder="ชื่อโรงพยาบาล">
+        </div>
+        <div class="field">
+          <label class="field-label">ประวัติแพ้ยา / แพ้สิ่งต่างๆ <span class="optional">(ถ้ามี)</span></label>
+          <textarea id="allergies" rows="2" placeholder="เช่น แพ้ยา Penicillin, แพ้อาหารทะเล"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">โรคประจำตัวหรืออาการป่วยที่มีอยู่</label>
+          <textarea id="conditions" rows="2" placeholder="เช่น เบาหวาน, มะเร็งระยะ... , โรคหัวใจ"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🤝 ผู้ตัดสินใจแทน (Healthcare Proxy)</div>
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:14px;">
+          คนที่คุณไว้วางใจให้ตัดสินใจเรื่องการรักษาแทนคุณ เมื่อคุณไม่สามารถสื่อสารได้ ควรอายุมากกว่า 20 ปี รู้จักความต้องการของคุณเป็นอย่างดี และเต็มใจทำหน้าที่นี้
+        </p>
+        <div class="field">
+          <label class="field-label">ชื่อผู้ตัดสินใจแทน</label>
+          <input type="text" id="proxyName" placeholder="ชื่อ-นามสกุล">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">ความสัมพันธ์</label>
+            <input type="text" id="proxyRelation" placeholder="เช่น ลูกสาว, คู่ชีวิต, เพื่อน">
+          </div>
+          <div class="field">
+            <label class="field-label">เบอร์โทร</label>
+            <input type="tel" id="proxyPhone" placeholder="0XX-XXX-XXXX">
+          </div>
+        </div>
+        <div style="border-top:1px dashed var(--border);margin:14px 0 14px;"></div>
+        <div class="field">
+          <label class="field-label">ชื่อผู้ตัดสินใจแทน <span style="background:var(--terra-light);color:var(--terra);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">สำรอง</span></label>
+          <input type="text" id="proxy2Name" placeholder="ชื่อ-นามสกุล (ถ้ามี)">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">ความสัมพันธ์</label>
+            <input type="text" id="proxy2Relation" placeholder="เช่น ลูกชาย, น้องสาว">
+          </div>
+          <div class="field">
+            <label class="field-label">เบอร์โทร</label>
+            <input type="tel" id="proxy2Phone" placeholder="0XX-XXX-XXXX">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👨‍⚕️ แพทย์ประจำตัว <span style="font-weight:400;font-size:12px;color:var(--text-light);">(ถ้ามี)</span></div>
+        <div class="field">
+          <label class="field-label">ชื่อแพทย์</label>
+          <input type="text" id="doctorName" placeholder="นพ./พญ. ชื่อ นามสกุล">
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">โรงพยาบาล / สถานพยาบาล</label>
+            <input type="text" id="doctorHospital" placeholder="ชื่อสถานพยาบาล">
+          </div>
+          <div class="field">
+            <label class="field-label">เบอร์โทร</label>
+            <input type="tel" id="doctorPhone" placeholder="0XX-XXX-XXXX">
+          </div>
+        </div>
+      </div>
+
+      <div class="card pin-card" id="pin-save-card">
+        <div class="card-title">☁️ บันทึกข้อมูลไว้ในคลาวด์</div>
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:14px;">ใส่ชื่อ นามสกุล และ PIN 6 หลัก เพื่อบันทึกและโหลดจากทุกอุปกรณ์ทุกที่</p>
+        <div class="row-2" style="margin-bottom:8px;">
+          <input type="text" id="save-firstname" placeholder="ชื่อ (ภาษาไทย)">
+          <input type="text" id="save-lastname" placeholder="นามสกุล (ภาษาไทย)">
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="text" id="save-pin" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="pin-input" placeholder="PIN 6 หลัก" style="flex:1;">
+          <button class="btn btn-primary" onclick="saveDraft()" style="white-space:nowrap;">💾 บันทึก</button>
+        </div>
+        <div id="save-status" style="font-size:13px;min-height:20px;"></div>
+      </div>
+
+      <div class="nav-buttons"><div></div><button class="btn btn-primary" onclick="goStep(2)">ถัดไป →</button></div>
+    </div>
+
+    <!-- ══ STEP 2: มุมมองต่อชีวิต ══ -->
+    <div class="step-panel" id="step-2">
+      <div class="section-header">
+        <h2>💭 มุมมองต่อชีวิตและความตาย</h2>
+        <p>ค้นหาสิ่งที่มีความหมายสำหรับคุณในช่วงสุดท้ายของชีวิต</p>
+      </div>
+
+      <div class="quote-box">
+        "สมุดเบาใจจะนำพาคุณสำรวจมุมมองต่อชีวิตและความตาย เพื่อให้ทุกคนรู้ว่าคุณต้องการอะไร"
+        <div style="margin-top:5px;font-size:12px;opacity:0.8;">— Peaceful Death</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">✨ นิสัยและตัวตน</div>
+        <div class="field">
+          <label class="field-label">นิสัยใจคอของฉัน</label>
+          <textarea id="personality" rows="3" placeholder="คุณอยากให้คนอื่นรู้ว่าคุณเป็นคนอย่างไร..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">สิ่งที่ฉันภูมิใจในชีวิต</label>
+          <textarea id="proudOf" rows="3" placeholder="ความสำเร็จ ความดี สิ่งที่เคยทำเพื่อผู้อื่น..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">สิ่งสำคัญที่ฉันอยากทำก่อนตาย <span class="optional">(ถ้ามี)</span></label>
+          <textarea id="bucketList" rows="3" placeholder="สิ่งที่อยากทำ พูด หรือจัดการให้เสร็จก่อนจากไป..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌅 มุมมองต่อความตาย</div>
+        <div class="field">
+          <label class="field-label">ฉันมองความตายว่า...</label>
+          <textarea id="deathView" rows="3" placeholder="ความคิดหรือความรู้สึกของคุณต่อความตาย..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">ความพร้อมรับมือการจากไป</label>
+          <div class="radio-group" id="readiness-group">
+            <label class="radio-card" onclick="selectRadio('readiness-group',this)"><input type="radio" name="deathReadiness" value="ready"><div><div class="check-label">🕊️ <strong>ฉันพร้อมจากไป ยอมรับความตายได้</strong></div></div></label>
+            <label class="radio-card" onclick="selectRadio('readiness-group',this)"><input type="radio" name="deathReadiness" value="somewhat"><div><div class="check-label">🌿 <strong>ฉันพอทำใจยอมรับได้</strong></div></div></label>
+            <label class="radio-card" onclick="selectRadio('readiness-group',this)"><input type="radio" name="deathReadiness" value="unsure"><div><div class="check-label">🌫️ <strong>ฉันยังไม่แน่ใจ</strong></div></div></label>
+            <label class="radio-card" onclick="selectRadio('readiness-group',this)"><input type="radio" name="deathReadiness" value="notready"><div><div class="check-label">💔 <strong>ฉันยังยอมรับไม่ได้</strong></div></div></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">ความเห็นต่อแนวทาง Palliative Care (การดูแลแบบประคับประคอง)</label>
+          <div class="radio-group" id="palliative-agree-group">
+            <label class="radio-card" onclick="selectRadio('palliative-agree-group',this)"><input type="radio" name="palliativeAgree" value="agree"><div><div class="check-label">✅ ฉันเห็นด้วย — ดูแลให้สบาย ไม่เจ็บ โดยไม่ยื้อ</div></div></label>
+            <label class="radio-card" onclick="selectRadio('palliative-agree-group',this)"><input type="radio" name="palliativeAgree" value="needinfo"><div><div class="check-label">❓ ยังไม่เข้าใจ ต้องการข้อมูลเพิ่ม</div></div></label>
+            <label class="radio-card" onclick="selectRadio('palliative-agree-group',this)"><input type="radio" name="palliativeAgree" value="disagree"><div><div class="check-label">⚕️ ไม่เห็นด้วย — ต้องการการรักษาอย่างถึงที่สุด</div></div></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⭐ คุณค่าที่สำคัญในช่วงสุดท้ายของชีวิต</div>
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:14px;">เลือก <strong>3 ข้อ</strong> ที่สำคัญที่สุดสำหรับคุณ แล้วเรียงลำดับ 1, 2, 3</p>
+        <div class="priority-group" id="priority-group">
+          <div class="priority-item"><select class="priority-sel" data-key="long"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">มีอายุยืนยาว</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="independent"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ดูแลตัวเองได้ ไม่เป็นภาระของคนอื่น</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="comfortable"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ได้อยู่อย่างสุขสบาย ไม่เจ็บปวดทรมาน</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="family"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ได้อยู่กับครอบครัวอันเป็นที่รัก</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="harmony"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ลูกหลานสามัคคี ไม่ทะเลาะกัน</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="friends"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ได้อยู่กับเพื่อนที่รักและไว้วางใจ</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="tasks"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">จัดการธุระการงานได้สำเร็จลุล่วงดี</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="respected"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ได้รับความเคารพให้เกียรติ</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="helpful"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ได้ช่วยเหลือผู้อื่น ทำตัวเป็นประโยชน์</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="spiritual"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">ได้ฝึกปฏิบัติตามความเชื่อทางจิตวิญญาณหรือศาสนา</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="conscious"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label">จากไปอย่างมีสติ รู้สึกตัว</span></div>
+          <div class="priority-item"><select class="priority-sel" data-key="other"><option value="">—</option><option>1</option><option>2</option><option>3</option></select><span class="priority-label"><span id="priority-other-label">อื่นๆ</span> <input type="text" id="priority-other-text" style="display:inline;width:auto;padding:2px 8px;font-size:13px;margin-left:6px;" placeholder="ระบุ..."></span></div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(1)">← ย้อนกลับ</button>
+        <button class="btn btn-primary" onclick="goStep(3)">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 3: หนังสือแสดงเจตนา ══ -->
+    <div class="step-panel" id="step-3">
+      <div class="section-header">
+        <h2>🏥 หนังสือแสดงเจตนาเลือกวิธีการรักษา</h2>
+        <p>ในกรณีที่เจ็บป่วยร้ายแรง มีโอกาสรอดน้อยมาก และไม่สามารถสื่อสารได้</p>
+      </div>
+
+      <div class="legal-note">
+        ⚖️ มีผลทางกฎหมายตาม <strong>พ.ร.บ.สุขภาพแห่งชาติ พ.ศ. 2550 มาตรา 12</strong> — บุคคลมีสิทธิทำหนังสือแสดงเจตนาไม่ประสงค์จะรับบริการสาธารณสุขที่เป็นไปเพียงเพื่อยืดการตายในวาระสุดท้าย และแพทย์ที่ปฏิบัติตามพ้นจากความรับผิดทั้งปวง
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 ความต้องการหลักด้านการรักษา <span style="color:var(--terra);font-size:12px;">(เลือก 1 ข้อ)</span></div>
+        <div class="radio-group" id="treatment-choice-group">
+          <label class="radio-card" onclick="selectRadio('treatment-choice-group',this)">
+            <input type="radio" name="treatmentChoice" value="full">
+            <div>
+              <div class="check-label"><strong>🔬 รักษาเต็มที่</strong> แม้จะต้องทุกข์ทรมานจากการใช้เครื่องพยุงชีพเพื่อยื้อชีวิต</div>
+            </div>
+          </label>
+          <label class="radio-card" onclick="selectRadio('treatment-choice-group',this)">
+            <input type="radio" name="treatmentChoice" value="full-then-palliative">
+            <div>
+              <div class="check-label"><strong>🌿 รักษาเต็มที่</strong> รวมถึงเครื่องพยุงชีพ แต่ <strong>ถ้าแพทย์เห็นว่าไม่ก่อประโยชน์</strong> อนุญาตให้ถอดเครื่อง และเปลี่ยนมาดูแลแบบประคับประคองเพื่อบรรเทาความเจ็บปวด</div>
+            </div>
+          </label>
+          <label class="radio-card" onclick="selectRadio('treatment-choice-group',this)">
+            <input type="radio" name="treatmentChoice" value="palliative-only">
+            <div>
+              <div class="check-label"><strong>🕊️ รักษาเพื่อบรรเทาความเจ็บปวดอย่างเดียว</strong> งดใช้เครื่องพยุงชีพ งดการยื้อชีวิต ขอเสียชีวิตตามธรรมชาติ</div>
+            </div>
+          </label>
+          <label class="radio-card" onclick="selectRadio('treatment-choice-group',this)">
+            <input type="radio" name="treatmentChoice" value="undecided">
+            <div>
+              <div class="check-label">❔ ยังตัดสินใจไม่ได้</div>
+            </div>
+          </label>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label class="field-label">หมายเหตุเพิ่มเติม <span class="optional">(ถ้ามี)</span></label>
+          <textarea id="treatmentNotes" rows="2" placeholder="เงื่อนไขพิเศษหรือความต้องการเพิ่มเติมเกี่ยวกับการรักษา..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🚫 สภาพที่ยอมรับไม่ได้ <span style="font-weight:400;font-size:12px;color:var(--text-light);">(เลือกได้หลายข้อ)</span></div>
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">หากเกิดสภาวะเหล่านี้ ขอให้เปลี่ยนมาดูแลแบบประคับประคองแทนการยื้อ</p>
+        <div class="check-group">
+          <label class="check-item" id="ci-1"><input type="checkbox" id="cond-dementia" onchange="chk(this,'ci-1')"><div><div class="check-label">ไม่มีสติรู้คิด จำคนรักไม่ได้</div></div></label>
+          <label class="check-item" id="ci-2"><input type="checkbox" id="cond-vegetative" onchange="chk(this,'ci-2')"><div><div class="check-label">อยู่ในสภาพผักถาวร (นอนไม่รู้สึกตัว ไม่ตอบสนอง ช่วยตัวเองไม่ได้)</div></div></label>
+          <label class="check-item" id="ci-3"><input type="checkbox" id="cond-ventilator" onchange="chk(this,'ci-3')"><div><div class="check-label">ต้องใช้เครื่องช่วยหายใจไปตลอดชีวิต</div></div></label>
+          <label class="check-item" id="ci-4"><input type="checkbox" id="cond-nocomm" onchange="chk(this,'ci-4')"><div><div class="check-label">สื่อสารกับผู้อื่นไม่ได้อีกต่อไปถาวร</div></div></label>
+          <label class="check-item" id="ci-5"><input type="checkbox" id="cond-pain" onchange="chk(this,'ci-5')"><div><div class="check-label">ปวดทรมานอย่างต่อเนื่องและไม่สามารถบรรเทาได้</div></div></label>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label class="field-label">อื่นๆ <span class="optional">(ถ้ามี)</span></label>
+          <input type="text" id="cond-other" placeholder="สภาพที่ยอมรับไม่ได้อื่นๆ...">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📍 สถานที่ที่ต้องการเสียชีวิต</div>
+        <div class="radio-group radio-row" id="death-location-group">
+          <label class="radio-card" onclick="selectRadio('death-location-group',this)"><input type="radio" name="deathLocation" value="home"><div class="check-label">🏠 บ้าน</div></label>
+          <label class="radio-card" onclick="selectRadio('death-location-group',this)"><input type="radio" name="deathLocation" value="hospital"><div class="check-label">🏥 โรงพยาบาล</div></label>
+          <label class="radio-card" onclick="selectRadio('death-location-group',this)"><input type="radio" name="deathLocation" value="hospice"><div class="check-label">🌿 Hospice</div></label>
+          <label class="radio-card" onclick="selectRadio('death-location-group',this)"><input type="radio" name="deathLocation" value="flexible"><div class="check-label">❔ ตามสถานการณ์</div></label>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(2)">← ย้อนกลับ</button>
+        <button class="btn btn-primary" onclick="goStep(4)">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 4: การดูแลที่ต้องการ ══ -->
+    <div class="step-panel" id="step-4">
+      <div class="section-header">
+        <h2>💛 การดูแลและการสื่อสาร</h2>
+        <p>สิ่งที่คุณต้องการในช่วงสุดท้ายของชีวิต และสิ่งที่อยากบอกคนที่รัก</p>
+      </div>
+
+      <div class="quote-box">
+        "ในวินาทีสุดท้ายของชีวิต สิ่งที่มนุษย์ต้องการคือ 'ความรู้สึกว่าตัวเองยังเป็นคน'"
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌸 การดูแลที่ต้องการ <span style="font-weight:400;font-size:12px;color:var(--text-light);">(เลือกได้หลายข้อ)</span></div>
+        <div class="check-group">
+          <label class="check-item" id="care-1"><input type="checkbox" id="care-clean" onchange="chk(this,'care-1')"><div class="check-label">🛁 ต้องการให้ร่างกายสะอาด อยู่ในห้องพักที่สะอาด</div></label>
+          <label class="check-item" id="care-2"><input type="checkbox" id="care-symptoms" onchange="chk(this,'care-2')"><div><div class="check-label">💊 บรรเทาอาการ คลื่นไส้ หายใจสั้น หอบเหนื่อย เพ้อ เศร้าซึม</div></div></label>
+          <label class="check-item" id="care-3"><input type="checkbox" id="care-lips" onchange="chk(this,'care-3')"><div class="check-label">💧 ให้ริมฝีปากชุ่มชื้น ดูแลช่องปากให้สะอาด</div></label>
+          <label class="check-item" id="care-4"><input type="checkbox" id="care-listen" onchange="chk(this,'care-4')"><div class="check-label">👂 ให้คนรอบข้างรับฟังความรู้สึกและความต้องการของฉัน</div></label>
+          <label class="check-item" id="care-5"><input type="checkbox" id="care-affirm" onchange="chk(this,'care-5')"><div class="check-label">❤️ ให้มีคนย้ำเตือนความดีงามที่ฉันเคยทำ รวมถึงการบอกรัก</div></label>
+          <label class="check-item" id="care-6"><input type="checkbox" id="care-touch" onchange="chk(this,'care-6')"><div class="check-label">🤗 ต้องการการสัมผัส จับมือ โอบกอด แม้ฉันไม่รู้สึกตัวก็ตาม</div></label>
+          <label class="check-item" id="care-7"><input type="checkbox" id="care-pain-full" onchange="chk(this,'care-7')"><div><div class="check-label">💉 ต้องการยาระงับปวดอย่างเพียงพอ <strong>แม้จะทำให้สะลึมสะลือ หลับนาน หรือไม่รู้สึกตัว</strong></div></div></label>
+          <label class="check-item" id="care-8"><input type="checkbox" id="care-pain-conscious" onchange="chk(this,'care-8')"><div><div class="check-label">🧠 ต้องการยาระงับปวด <strong>ในระดับที่ยังมีสติรับรู้ความเป็นไปได้</strong></div></div></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎵 ความต้องการเฉพาะตัว</div>
+        <div class="field">
+          <label class="field-label">เพลง / เสียง ที่ต้องการฟัง</label>
+          <textarea id="music" rows="2" placeholder="เช่น เพลงลูกทุ่ง, บทสวดมนต์, ดนตรีคลาสสิค, เสียงธรรมชาติ..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">สิ่งที่ต้องการให้มีในห้องพัก</label>
+          <textarea id="roomItems" rows="2" placeholder="เช่น ดอกไม้สดสีชมพู, แสงไฟสลัว, รูปถ่ายครอบครัว, เทียนหอม..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">คน/สัตว์เลี้ยงที่ต้องการพบ</label>
+          <input type="text" id="meetPeople" placeholder="เช่น แมวชื่อมะหมี่, เพื่อนสนิทชื่อ..., หลานๆ...">
+        </div>
+        <div class="field">
+          <label class="field-label">ผู้ที่ต้องการให้นำทางการจากไปอย่างสงบ <span class="optional">(พระ/นักบวช/คนที่รัก)</span></label>
+          <input type="text" id="guide" placeholder="เช่น พระอาจารย์ที่วัด, แม่, เพื่อนสนิท...">
+        </div>
+        <div class="field">
+          <label class="field-label">สิ่งที่ไม่ต้องการ</label>
+          <textarea id="doNotWant" rows="2" placeholder="สิ่งที่ไม่ต้องการในช่วงเวลานั้น เช่น เสียงดัง, บรรยากาศวุ่นวาย, ผู้เยี่ยมมากเกินไป..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">ความต้องการอื่นๆ ที่อยากฝากให้คนใกล้ชิดช่วยจัดการ</label>
+          <textarea id="otherWishes" rows="3" placeholder="เช่น ดูแลแมวที่บ้าน, จัดการเอกสารสำคัญที่ลิ้นชัก, แจ้งให้เพื่อนที่ต่างประเทศรู้..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📢 การสื่อสารในช่วงท้ายของชีวิต</div>
+        <div class="field">
+          <label class="field-label">กรณีแพทย์แจ้งผลการวินิจฉัยโรคร้ายแรง ฉันต้องการ...</label>
+          <div class="radio-group" id="diagnosis-group">
+            <label class="radio-card" onclick="selectRadio('diagnosis-group',this)"><input type="radio" name="diagnosisPref" value="self"><div class="check-label">รับรู้คำวินิจฉัยด้วยตนเองเพียงลำพัง</div></label>
+            <label class="radio-card" onclick="selectRadio('diagnosis-group',this)"><input type="radio" name="diagnosisPref" value="with-support"><div>
+              <div class="check-label">รับรู้คำวินิจฉัย โดยมีคนร่วมฟังด้วย</div>
+              <input type="text" id="diagnosisCompanion" style="margin-top:6px;" placeholder="ชื่อคนที่อยากให้ร่วมฟัง">
+            </div></label>
+            <label class="radio-card" onclick="selectRadio('diagnosis-group',this)"><input type="radio" name="diagnosisPref" value="proxy"><div>
+              <div class="check-label">ไม่ต้องการรับรู้เอง ให้แพทย์บอกคนที่ฉันไว้ใจแทน</div>
+              <input type="text" id="diagnosisProxy" style="margin-top:6px;" placeholder="ชื่อคนที่ไว้ใจ">
+            </div></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">สิ่งที่ต้องการสื่อสารกับคนใกล้ชิด <span class="optional">(เลือกได้หลายข้อ)</span></label>
+          <div class="check-group">
+            <label class="check-item" id="comm-1"><input type="checkbox" id="comm-love" onchange="chk(this,'comm-1')"><div class="check-label">💛 ฉันรักพวกเขา</div></label>
+            <label class="check-item" id="comm-2"><input type="checkbox" id="comm-thanks" onchange="chk(this,'comm-2')"><div class="check-label">🙏 ขอบคุณทุกคนที่ดูแล ให้ความรักและความปรารถนาดี</div></label>
+            <label class="check-item" id="comm-3"><input type="checkbox" id="comm-sorry" onchange="chk(this,'comm-3')"><div class="check-label">🤍 ขอโทษในความผิดพลาดล่วงเกิน ทั้งโดยรู้ตัวและไม่รู้ตัว</div></label>
+            <label class="check-item" id="comm-4"><input type="checkbox" id="comm-accept" onchange="chk(this,'comm-4')"><div class="check-label">🕊️ ฉันยอมรับความตายได้ — ช่วงเวลาตายคือขั้นตอนธรรมดาของชีวิต</div></label>
+            <label class="check-item" id="comm-5"><input type="checkbox" id="comm-peace" onchange="chk(this,'comm-5')"><div class="check-label">☮️ ต้องการบรรยากาศแห่งความสงบและสันติในใจขณะจากไป</div></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">ต้องการให้คนรอบตัวระลึกถึงฉันดังนี้...</label>
+          <textarea id="remembrance" rows="2" placeholder="อยากให้คนจดจำคุณในแบบไหน..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💌 ข้อความถึงครอบครัวและคนที่รัก</div>
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">เขียนในขณะที่คุณยังพูดได้ สิ่งที่อยากบอกไว้</p>
+        <textarea id="messageToFamily" rows="6" placeholder="คำพูดจากใจ สิ่งที่อยากบอก ความรู้สึก หรือความปรารถนาดีต่อคนที่คุณรัก..."></textarea>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(3)">← ย้อนกลับ</button>
+        <button class="btn btn-primary" onclick="goStep(5)">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- ══ STEP 5: งานศพ ══ -->
+    <div class="step-panel" id="step-5">
+      <div class="section-header">
+        <h2>🕯️ การจัดการร่างกายและงานศพ</h2>
+        <p>วางแผนล่วงหน้าเพื่อให้คนที่คุณรักไม่ต้องแบกรับการตัดสินใจ</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">❤️‍🩹 การบริจาคร่างกายหรืออวัยวะ</div>
+        <div class="radio-group radio-row" id="organ-group">
+          <label class="radio-card" onclick="selectRadio('organ-group',this)"><input type="radio" name="organDonation" value="none"><div class="check-label">❌ ไม่ต้องการบริจาค</div></label>
+          <label class="radio-card" onclick="selectRadio('organ-group',this)"><input type="radio" name="organDonation" value="all"><div class="check-label">✅ บริจาคได้ทั้งหมด</div></label>
+          <label class="radio-card" onclick="selectRadio('organ-group',this)"><input type="radio" name="organDonation" value="partial"><div class="check-label">⚠️ บริจาคบางส่วน</div></label>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label class="field-label">เอกสารการบริจาคอยู่ที่ / รายละเอียด</label>
+          <input type="text" id="organDetails" placeholder="เช่น มีบัตรบริจาคอวัยวะอยู่ในกระเป๋าสตางค์, ลงทะเบียนกับ...">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🕯️ งานศพ</div>
+        <div class="field">
+          <label class="field-label">รูปแบบงานศพที่ต้องการ</label>
+          <div class="radio-group" id="funeral-group">
+            <label class="radio-card" onclick="selectRadio('funeral-group',this)"><input type="radio" name="funeralStyle" value="simple"><div><div class="check-label"><strong>เรียบง่าย</strong></div><div class="check-sub">ไม่ต้องใหญ่โต คนที่รักมาอำลาโดยไม่ต้องแบกภาระ</div></div></label>
+            <label class="radio-card" onclick="selectRadio('funeral-group',this)"><input type="radio" name="funeralStyle" value="buddhist"><div><div class="check-label"><strong>พิธีกรรมพุทธ</strong></div><div class="check-sub">สวดอภิธรรม ตามธรรมเนียมไทยดั้งเดิม</div></div></label>
+            <label class="radio-card" onclick="selectRadio('funeral-group',this)"><input type="radio" name="funeralStyle" value="ash-spread"><div><div class="check-label"><strong>เผาและโปรยอังคาร</strong></div><div class="check-sub">ไม่ต้องฝัง ปล่อยคืนธรรมชาติ</div></div></label>
+            <label class="radio-card" onclick="selectRadio('funeral-group',this)"><input type="radio" name="funeralStyle" value="other"><div><div class="check-label"><strong>อื่นๆ</strong> (ระบุด้านล่าง)</div></div></label>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label class="field-label">จำนวนวัน</label>
+            <input type="text" id="funeralDays" placeholder="เช่น 3 วัน, 7 วัน">
+          </div>
+          <div class="field">
+            <label class="field-label">วงเงินประมาณ</label>
+            <input type="text" id="funeralBudget" placeholder="เช่น ไม่เกิน 50,000 บาท">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">ผู้ดูแลงานศพ</label>
+          <input type="text" id="funeralManager" placeholder="ชื่อคนที่อยากให้ดูแลงาน">
+        </div>
+        <div class="field">
+          <label class="field-label">ความต้องการพิเศษด้านงานศพ</label>
+          <textarea id="funeralWishes" rows="3" placeholder="เช่น เพลงที่อยากให้เปิด, ดอกไม้ที่ชอบ, ของที่ระลึก, ไม่อยากให้มีพวงหรีดกระดาษ, อยากให้บริจาคเงินช่วยเด็กแทน..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📄 เอกสารสำคัญ</div>
+        <div class="field">
+          <label class="field-label">พินัยกรรม</label>
+          <div class="radio-group radio-row" id="will-group">
+            <label class="radio-card" onclick="selectRadio('will-group',this);toggleWill(true)"><input type="radio" name="hasWill" value="yes"><div class="check-label">✅ มีแล้ว</div></label>
+            <label class="radio-card" onclick="selectRadio('will-group',this);toggleWill(false)"><input type="radio" name="hasWill" value="inprogress"><div class="check-label">🔄 กำลังทำ</div></label>
+            <label class="radio-card" onclick="selectRadio('will-group',this);toggleWill(false)"><input type="radio" name="hasWill" value="no"><div class="check-label">❌ ยังไม่มี</div></label>
+          </div>
+          <div id="willLocation-field" style="display:none;margin-top:10px;">
+            <input type="text" id="willLocation" placeholder="พินัยกรรมอยู่ที่... เช่น ลิ้นชักบนที่บ้าน, ฝากทนายความ...">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">ผู้รับผลประโยชน์จากประกันชีวิต / กองทุน</label>
+          <textarea id="insurance" rows="2" placeholder="เช่น ลูกสาว [ชื่อ] รับประกันชีวิตจาก บ. AIA, กองทุน PVD ที่บริษัท X..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">ที่เก็บเอกสารสำคัญและข้อมูลบัญชี <span class="optional">(ถ้าต้องการระบุ)</span></label>
+          <textarea id="accountInfo" rows="2" placeholder="เช่น เอกสารสำคัญอยู่ในลิ้นชักบน, รหัสตู้เซฟอยู่ที่..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 คนที่ทราบข้อมูลสมุดเบาใจของฉัน</div>
+        <p style="font-size:13px;color:var(--text-light);margin-bottom:12px;">หลังทำสมุดเบาใจ ควรสื่อสารกับคนเหล่านี้ให้รับรู้เจตนาของคุณ</p>
+        <div class="field">
+          <label class="field-label">ฉันทำสมุดเบาใจ...</label>
+          <div class="check-group">
+            <label class="check-item" id="aw-1"><input type="checkbox" id="aw-alone" onchange="chk(this,'aw-1')"><div class="check-label">เพียงคนเดียว</div></label>
+            <label class="check-item" id="aw-2"><input type="checkbox" id="aw-family" onchange="chk(this,'aw-2')"><div class="check-label">ร่วมกับครอบครัว</div></label>
+            <label class="check-item" id="aw-3"><input type="checkbox" id="aw-doctor" onchange="chk(this,'aw-3')"><div class="check-label">ร่วมกับบุคลากรสุขภาพ</div></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">คนที่รับทราบข้อมูลสมุดเบาใจนี้แล้ว</label>
+          <textarea id="informed" rows="2" placeholder="ชื่อคนที่รับทราบข้อมูล เพื่อให้มั่นใจว่ามีคนรู้..."></textarea>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goStep(4)">← ย้อนกลับ</button>
+        <button class="btn btn-terra" onclick="generateBook()">🌿 สร้างสมุดเบาใจของฉัน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ VIEWER ═══════════════════ -->
+<div id="viewerApp">
+  <div class="viewer-hero">
+    <div class="lotus">🪷</div>
+    <h1>สมุดเบาใจ</h1>
+    <div class="name" id="v-name">—</div>
+    <div class="date-line" id="v-date"></div>
+  </div>
+  <div class="viewer-body">
+    <div class="legal-note" style="margin-top:0;">
+      ⚖️ เอกสารนี้มีผลตาม <strong>พ.ร.บ.สุขภาพแห่งชาติ พ.ศ. 2550 มาตรา 12</strong> กรุณาเคารพความประสงค์ของเจ้าของเอกสาร
+    </div>
+    <div class="v-card"><div class="v-card-head">🪪 ข้อมูลส่วนตัว</div><div class="v-card-body" id="vb-personal"></div></div>
+    <div class="v-card"><div class="v-card-head">💭 มุมมองต่อชีวิตและความตาย</div><div class="v-card-body" id="vb-life"></div></div>
+    <div class="v-card"><div class="v-card-head">🏥 หนังสือแสดงเจตนา</div><div class="v-card-body" id="vb-medical"></div></div>
+    <div class="v-card"><div class="v-card-head">💛 การดูแลที่ต้องการ</div><div class="v-card-body" id="vb-care"></div></div>
+    <div class="v-card" id="vc-message" style="display:none;"><div class="v-card-head purple">💌 ข้อความถึงคนที่รัก</div><div class="v-card-body"><div class="message-box" id="vb-message"></div></div></div>
+    <div class="v-card"><div class="v-card-head">🕯️ การจัดการร่างกายและงานศพ</div><div class="v-card-body" id="vb-estate"></div></div>
+
+    <div class="qr-section">
+      <h3>🔗 QR สมุดเบาใจ</h3>
+      <p>แสกน QR เพื่อเปิดสมุดนี้ — กรอก PIN เพื่อดูข้อมูล<br>ปริ้นและพกไว้ในกระเป๋าสตางค์ หรือส่งให้ครอบครัวทาง LINE</p>
+      <div id="qrcode-display"></div>
+      <div class="qr-actions">
+        <button class="btn btn-secondary" onclick="downloadQR()">⬇️ บันทึก QR</button>
+        <button class="btn btn-secondary" onclick="copyLink()">🔗 คัดลอก Link</button>
+        <button class="btn btn-secondary" onclick="printWalletCard()">💳 บัตรพกพา</button>
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์</button>
+        <button class="btn btn-primary" onclick="editFromSummary()">✏️ แก้ไขข้อมูล</button>
+      </div>
+    </div>
+
+    <div id="wallet-card-section" style="display:none;">
+      <div class="wallet-card">
+        <div class="wc-title">🌿 สมุดเบาใจ</div>
+        <div id="wc-name"></div>
+        <div id="wc-proxy"></div>
+        <div style="margin-top:10px;font-size:11px;opacity:0.7;">แสกน QR เพื่อดูรายละเอียดทั้งหมด</div>
+        <div id="wc-qr" style="margin-top:10px;background:white;border-radius:8px;padding:8px;display:inline-block;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ QR LANDING ═══════════════════ -->
+<div id="qrLandingApp">
+  <div class="qr-landing-wrap">
+    <div class="lotus">🪷</div>
+    <h2>สมุดเบาใจของ</h2>
+    <h1 id="qr-access-name">—</h1>
+    <p style="font-size:14px;color:var(--text-light);margin-bottom:24px;">กรอก PIN 6 หลักเพื่อดูข้อมูล</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="qr-pin-input" maxlength="6" inputmode="numeric" class="pin-input" placeholder="000000" style="flex:1;">
+      <button class="btn btn-primary" onclick="loadFromQR()">📂 ดูข้อมูล</button>
+    </div>
+    <div id="qr-status" style="font-size:13px;min-height:20px;text-align:left;"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+let currentStep = 1;
+let bookData = {};
+const TOTAL_STEPS = 5;
+const FIREBASE_URL = 'https://sabajai-book-default-rtdb.firebaseio.com/sabajai_books';
+let currentPin = '';
+let currentFirstName = '';
+let currentLastName = '';
+let currentPinOnly = '';
+
+const locationMap = { home:'🏠 บ้าน', hospital:'🏥 โรงพยาบาล', hospice:'🌿 Hospice', flexible:'❔ ตามสถานการณ์' };
+const treatmentMap = {
+  'full': '🔬 รักษาเต็มที่ แม้ทุกข์ทรมานจากเครื่องพยุงชีพ',
+  'full-then-palliative': '🌿 รักษาเต็มที่ แต่ถ้าไม่มีประโยชน์ ให้เปลี่ยนมาดูแลแบบประคับประคอง',
+  'palliative-only': '🕊️ รักษาเพื่อบรรเทาความเจ็บปวดอย่างเดียว งดการยื้อชีวิต',
+  'undecided': '❔ ยังตัดสินใจไม่ได้'
+};
+const readinessMap = { ready:'🕊️ พร้อมจากไป ยอมรับความตายได้', somewhat:'🌿 พอทำใจยอมรับได้', unsure:'🌫️ ยังไม่แน่ใจ', notready:'💔 ยังยอมรับไม่ได้' };
+const palliativeMap = { agree:'✅ เห็นด้วยกับ Palliative Care', needinfo:'❓ ต้องการข้อมูลเพิ่ม', disagree:'⚕️ ต้องการการรักษาอย่างถึงที่สุด' };
+const organMap = { none:'❌ ไม่ต้องการบริจาค', all:'✅ บริจาคได้ทั้งหมด', partial:'⚠️ บริจาคบางส่วน' };
+const funeralMap = { simple:'เรียบง่าย', buddhist:'พิธีกรรมพุทธ', 'ash-spread':'เผาและโปรยอังคาร', other:'ตามที่ระบุ' };
+const willMap = { yes:'มีแล้ว', inprogress:'กำลังจัดทำ', no:'ยังไม่มี' };
+const diagMap = { self:'รับรู้ด้วยตนเอง', 'with-support':'รับรู้โดยมีคนร่วม', proxy:'ให้คนที่ไว้ใจรับรู้แทน' };
+const priorityLabels = {
+  long:'มีอายุยืนยาว', independent:'ดูแลตัวเองได้ ไม่เป็นภาระ', comfortable:'อยู่สุขสบาย ไม่เจ็บปวด',
+  family:'ได้อยู่กับครอบครัว', harmony:'ลูกหลานสามัคคี', friends:'ได้อยู่กับเพื่อนที่รัก',
+  tasks:'จัดการธุระสำเร็จลุล่วง', respected:'ได้รับความเคารพ', helpful:'ได้ช่วยเหลือผู้อื่น',
+  spiritual:'ฝึกปฏิบัติทางจิตวิญญาณ', conscious:'จากไปอย่างมีสติ', other:'อื่นๆ'
+};
+
+// MODE DETECTION
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash;
+  if (hash.startsWith('#access=')) {
+    // New QR format: #access=ชื่อ_นามสกุล
+    try {
+      const val = decodeURIComponent(hash.slice(8));
+      const idx = val.lastIndexOf('_');
+      const fn = val.slice(0, idx < 0 ? val.length : val.indexOf('_'));
+      const ln = val.slice(val.indexOf('_') + 1);
+      document.getElementById('qr-access-name').textContent = fn + ' ' + ln;
+      document.getElementById('qrLandingApp').style.display = 'block';
+      window._qrFirstName = fn;
+      window._qrLastName = ln;
+    } catch(e) { showLanding(); }
+  } else if (hash.startsWith('#data=')) {
+    // Legacy QR format (backward compat)
+    try {
+      const encoded = hash.slice(6);
+      const json = (typeof LZString !== 'undefined')
+        ? LZString.decompressFromEncodedURIComponent(encoded)
+        : atob(decodeURIComponent(encoded));
+      bookData = JSON.parse(json);
+      showViewer();
+    } catch(e) {
+      showLanding();
+      showAlert('ไม่สามารถอ่านข้อมูล QR ได้ กรุณาลองอีกครั้ง');
+    }
+  } else {
+    showLanding();
+  }
+});
+
+function showLanding() {
+  document.getElementById('landingApp').style.display = 'block';
+  document.getElementById('formApp').style.display = 'none';
+  document.getElementById('viewerApp').style.display = 'none';
+  document.getElementById('qrLandingApp').style.display = 'none';
+}
+function showViewer() {
+  document.getElementById('landingApp').style.display = 'none';
+  document.getElementById('formApp').style.display = 'none';
+  document.getElementById('viewerApp').style.display = 'block';
+  document.getElementById('qrLandingApp').style.display = 'none';
+  renderViewer(bookData);
+  setTimeout(generateQR, 400);
+}
+function startNew() {
+  document.getElementById('landingApp').style.display = 'none';
+  document.getElementById('formApp').style.display = 'block';
+  goStep(1);
+}
+function resetToLanding() {
+  window.history.replaceState(null, '', window.location.pathname);
+  currentPin = ''; currentFirstName = ''; currentLastName = ''; currentPinOnly = '';
+  updateTopBar();
+  showLanding();
+}
+function updateTopBar() {
+  const nameEl = document.getElementById('topbar-name');
+  const saveEl = document.getElementById('topbar-save');
+  const pinCard = document.getElementById('pin-save-card');
+  if (currentPin && currentFirstName) {
+    nameEl.textContent = '👤 ' + currentFirstName + ' ' + currentLastName;
+    nameEl.style.display = 'inline-block';
+    saveEl.style.display = 'inline-block';
+    if (pinCard) pinCard.style.display = 'none';
+  } else {
+    nameEl.style.display = 'none';
+    saveEl.style.display = 'none';
+    if (pinCard) pinCard.style.display = 'block';
+  }
+}
+async function quickSave() {
+  if (!currentPin) return;
+  bookData = collectData();
+  const ok = await saveToFirebase(currentPin, bookData);
+  showToast(ok ? '✅ บันทึกแล้ว' : '❌ บันทึกไม่สำเร็จ');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast-msg');
+  if (!t) return;
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.opacity = '0'; }, 2200);
+}
+function editFromSummary() {
+  const pin = prompt('🔐 ยืนยัน PIN 6 หลักเพื่อแก้ไขข้อมูล');
+  if (!pin) return;
+  if (pin.trim() !== currentPinOnly) { alert('❌ PIN ไม่ถูกต้อง'); return; }
+  document.getElementById('viewerApp').style.display = 'none';
+  editBook();
+  const sfn = document.getElementById('save-firstname');
+  const sln = document.getElementById('save-lastname');
+  const sp = document.getElementById('save-pin');
+  if (sfn) sfn.value = currentFirstName;
+  if (sln) sln.value = currentLastName;
+  if (sp) sp.value = currentPinOnly;
+}
+function getQRUrl() {
+  if (currentFirstName && currentLastName) {
+    const fn = encodeURIComponent(currentFirstName.trim().replace(/\s+/g,''));
+    const ln = encodeURIComponent(currentLastName.trim().replace(/\s+/g,''));
+    return window.location.origin + window.location.pathname + '#access=' + fn + '_' + ln;
+  }
+  return window.location.origin + window.location.pathname;
+}
+async function loadFromQR() {
+  const pin = (document.getElementById('qr-pin-input')?.value || '').trim();
+  const statusEl = document.getElementById('qr-status');
+  if (!/^\d{6}$/.test(pin)) { statusEl.textContent = '⚠️ PIN ต้องเป็นตัวเลข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
+  const userKey = makeUserKey(window._qrFirstName || '', window._qrLastName || '', pin);
+  statusEl.textContent = '⏳ กำลังโหลด...'; statusEl.style.color = 'var(--text-light)';
+  const rec = await loadFromFirebase(userKey);
+  if (!rec || !rec.data) { statusEl.textContent = '❌ ไม่พบข้อมูล PIN ไม่ถูกต้อง'; statusEl.style.color = 'var(--terra)'; return; }
+  currentPin = userKey; currentFirstName = window._qrFirstName; currentLastName = window._qrLastName; currentPinOnly = pin;
+  bookData = rec.data;
+  updateTopBar();
+  document.getElementById('qrLandingApp').style.display = 'none';
+  showViewer();
+}
+function showAlert(msg) {
+  const el = document.getElementById('alert-box');
+  el.textContent = '⚠️ ' + msg;
+  el.className = 'alert error';
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ═══════════════════ FIREBASE PIN ═══════════════════
+function makeUserKey(firstName, lastName, pin) {
+  const fn = firstName.trim().replace(/\s+/g, '');
+  const ln = lastName.trim().replace(/\s+/g, '');
+  return `${fn}_${ln}_${pin}`;
+}
+
+async function saveToFirebase(userKey, data) {
+  const name = (data.personal?.fullName || 'ไม่ระบุชื่อ').trim() || 'ไม่ระบุชื่อ';
+  const payload = { name, data, savedAt: new Date().toISOString() };
+  try {
+    const r = await fetch(`${FIREBASE_URL}/${encodeURIComponent(userKey)}.json`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+
+async function loadFromFirebase(userKey) {
+  try {
+    const r = await fetch(`${FIREBASE_URL}/${encodeURIComponent(userKey)}.json`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d;
+  } catch(e) { return null; }
+}
+
+async function loadByPin() {
+  const firstName = (document.getElementById('landing-firstname')?.value || '').trim();
+  const lastName = (document.getElementById('landing-lastname')?.value || '').trim();
+  const pin = (document.getElementById('landing-pin')?.value || '').trim();
+  const statusEl = document.getElementById('pin-status');
+  if (!firstName) { statusEl.textContent = '⚠️ กรุณาใส่ชื่อ'; statusEl.style.color = 'var(--terra)'; return; }
+  if (!lastName) { statusEl.textContent = '⚠️ กรุณาใส่นามสกุล'; statusEl.style.color = 'var(--terra)'; return; }
+  if (!/^\d{6}$/.test(pin)) { statusEl.textContent = '⚠️ PIN ต้องเป็นตัวเลข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
+  const userKey = makeUserKey(firstName, lastName, pin);
+  statusEl.textContent = '⏳ กำลังโหลดข้อมูล...';
+  statusEl.style.color = 'var(--text-light)';
+  const rec = await loadFromFirebase(userKey);
+  if (!rec || !rec.data) {
+    statusEl.textContent = '❌ ไม่พบข้อมูล กรุณาตรวจสอบชื่อ นามสกุล และ PIN';
+    statusEl.style.color = 'var(--terra)';
+    return;
+  }
+  currentPin = userKey;
+  currentFirstName = firstName;
+  currentLastName = lastName;
+  currentPinOnly = pin;
+  bookData = rec.data;
+  updateTopBar();
+  statusEl.textContent = `✅ พบข้อมูลของ: ${rec.name}`;
+  statusEl.style.color = 'var(--sage-dark)';
+  setTimeout(() => {
+    document.getElementById('landingApp').style.display = 'none';
+    showViewer();
+  }, 700);
+}
+
+async function saveDraft() {
+  const firstName = (document.getElementById('save-firstname')?.value || '').trim();
+  const lastName = (document.getElementById('save-lastname')?.value || '').trim();
+  const pin = (document.getElementById('save-pin')?.value || '').trim();
+  const statusEl = document.getElementById('save-status');
+  if (!firstName) { statusEl.textContent = '⚠️ กรุณาใส่ชื่อ'; statusEl.style.color = 'var(--terra)'; return; }
+  if (!lastName) { statusEl.textContent = '⚠️ กรุณาใส่นามสกุล'; statusEl.style.color = 'var(--terra)'; return; }
+  if (!/^\d{6}$/.test(pin)) { statusEl.textContent = '⚠️ PIN ต้องเป็นตัวเลข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
+  const userKey = makeUserKey(firstName, lastName, pin);
+  currentPin = userKey;
+  currentFirstName = firstName;
+  currentLastName = lastName;
+  currentPinOnly = pin;
+  updateTopBar();
+  statusEl.textContent = '⏳ กำลังบันทึก...';
+  statusEl.style.color = 'var(--text-light)';
+  const data = collectData();
+  const ok = await saveToFirebase(userKey, data);
+  if (ok) {
+    statusEl.textContent = `✅ บันทึกสำเร็จ! ชื่อ: ${firstName} ${lastName} | PIN: ${pin}`;
+    statusEl.style.color = 'var(--sage-dark)';
+  } else {
+    statusEl.textContent = '❌ บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง';
+    statusEl.style.color = 'var(--terra)';
+  }
+}
+
+// FORM NAV
+function goStep(n) {
+  if (n > currentStep && !validateStep(currentStep)) return;
+  if (currentPin && n !== currentStep) { bookData = collectData(); saveToFirebase(currentPin, bookData); showToast('💾 บันทึกอัตโนมัติ'); }
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  document.getElementById('alert-box').style.display = 'none';
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const d = document.getElementById('sdot-' + i);
+    d.className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  currentStep = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function goStepDirect(n) {
+  if (currentPin && n !== currentStep) { bookData = collectData(); saveToFirebase(currentPin, bookData); showToast('💾 บันทึกอัตโนมัติ'); }
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  document.getElementById('alert-box').style.display = 'none';
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const d = document.getElementById('sdot-' + i);
+    d.className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  currentStep = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function validateStep(s) {
+  if (s === 1) {
+    if (!document.getElementById('fullName').value.trim()) { showAlert('กรุณาระบุชื่อ-นามสกุลก่อน'); return false; }
+  }
+  return true;
+}
+
+// UI HELPERS
+function chk(el, cid) {
+  document.getElementById(cid).classList.toggle('checked', el.checked);
+}
+function selectRadio(gid, clicked) {
+  document.querySelectorAll('#' + gid + ' .radio-card').forEach(c => c.classList.remove('selected'));
+  clicked.classList.add('selected');
+}
+function toggleWill(show) {
+  document.getElementById('willLocation-field').style.display = show ? 'block' : 'none';
+}
+
+// COLLECT DATA
+function collectData() {
+  const g = id => (document.getElementById(id)?.value || '').trim();
+  const cb = id => document.getElementById(id)?.checked || false;
+  const radio = name => { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+  const priorities = {};
+  document.querySelectorAll('.priority-sel').forEach(s => {
+    if (s.value) priorities[s.dataset.key] = parseInt(s.value);
+  });
+
+  return {
+    createdAt: new Date().toISOString(),
+    personal: {
+      fullName: g('fullName'), nickname: g('nickname'), birthDate: g('birthDate'),
+      idNumber: g('idNumber'), bloodType: g('bloodType'), address: g('address'),
+      regularHospital: g('regularHospital'), allergies: g('allergies'), conditions: g('conditions'),
+      proxyName: g('proxyName'), proxyRelation: g('proxyRelation'), proxyPhone: g('proxyPhone'),
+      proxy2Name: g('proxy2Name'), proxy2Relation: g('proxy2Relation'), proxy2Phone: g('proxy2Phone'),
+      doctorName: g('doctorName'), doctorHospital: g('doctorHospital'), doctorPhone: g('doctorPhone'),
+    },
+    lifeView: {
+      personality: g('personality'), proudOf: g('proudOf'), bucketList: g('bucketList'),
+      deathView: g('deathView'), deathReadiness: radio('deathReadiness'), palliativeAgree: radio('palliativeAgree'),
+      priorities,
+      priorityOtherText: g('priority-other-text'),
+    },
+    medical: {
+      treatmentChoice: radio('treatmentChoice'), treatmentNotes: g('treatmentNotes'),
+      unacceptable: {
+        dementia: cb('cond-dementia'), vegetative: cb('cond-vegetative'), ventilator: cb('cond-ventilator'),
+        nocomm: cb('cond-nocomm'), pain: cb('cond-pain'), other: g('cond-other'),
+      },
+      deathLocation: radio('deathLocation'),
+    },
+    care: {
+      careChecks: {
+        clean: cb('care-clean'), symptoms: cb('care-symptoms'), lips: cb('care-lips'),
+        listen: cb('care-listen'), affirm: cb('care-affirm'), touch: cb('care-touch'),
+        painFull: cb('care-pain-full'), painConscious: cb('care-pain-conscious'),
+      },
+      music: g('music'), roomItems: g('roomItems'), meetPeople: g('meetPeople'),
+      guide: g('guide'), doNotWant: g('doNotWant'), otherWishes: g('otherWishes'),
+      diagnosisPref: radio('diagnosisPref'), diagnosisCompanion: g('diagnosisCompanion'), diagnosisProxy: g('diagnosisProxy'),
+      commChecks: {
+        love: cb('comm-love'), thanks: cb('comm-thanks'), sorry: cb('comm-sorry'),
+        accept: cb('comm-accept'), peace: cb('comm-peace'),
+      },
+      remembrance: g('remembrance'), messageToFamily: g('messageToFamily'),
+    },
+    estate: {
+      organDonation: radio('organDonation'), organDetails: g('organDetails'),
+      funeralStyle: radio('funeralStyle'), funeralDays: g('funeralDays'),
+      funeralBudget: g('funeralBudget'), funeralManager: g('funeralManager'), funeralWishes: g('funeralWishes'),
+      hasWill: radio('hasWill'), willLocation: g('willLocation'),
+      insurance: g('insurance'), accountInfo: g('accountInfo'),
+      awarenessChecks: { alone: cb('aw-alone'), family: cb('aw-family'), doctor: cb('aw-doctor') },
+      informed: g('informed'),
+    }
+  };
+}
+
+// GENERATE
+function generateBook() {
+  bookData = collectData();
+  const _fn = (document.getElementById('save-firstname')?.value || '').trim() || currentFirstName;
+  const _ln = (document.getElementById('save-lastname')?.value || '').trim() || currentLastName;
+  const _pin = (document.getElementById('save-pin')?.value || '').trim() || currentPinOnly;
+  if (_fn && _ln && /^\d{6}$/.test(_pin)) {
+    const userKey = makeUserKey(_fn, _ln, _pin);
+    currentPin = userKey; currentFirstName = _fn; currentLastName = _ln; currentPinOnly = _pin;
+    updateTopBar();
+    saveToFirebase(userKey, bookData);
+  } else if (currentPin) {
+    saveToFirebase(currentPin, bookData);
+  }
+  document.getElementById('formApp').style.display = 'none';
+  showViewer();
+}
+
+// VIEWER (now also serves as summary page)
+function showViewer_legacy() {
+  document.getElementById('viewerApp').style.display = 'block';
+  renderViewer(bookData);
+  setTimeout(generateQR, 400);
+}
+
+function vr(lbl, val) {
+  if (!val) return '';
+  return `<div class="v-row"><span class="v-lbl">${lbl}</span><span class="v-val">${val}</span></div>`;
+}
+function vtag(t, cls='') { return `<span class="tag ${cls}">${t}</span>`; }
+function vcli(icon, text) { return `<div class="cli"><span class="icon">${icon}</span><span>${text}</span></div>`; }
+
+function renderViewer(d) {
+  const p = d.personal || {}, lv = d.lifeView || {}, m = d.medical || {}, c = d.care || {}, e = d.estate || {};
+
+  // Header
+  document.getElementById('v-name').textContent = p.nickname ? `${p.fullName} (${p.nickname})` : (p.fullName || 'ไม่ระบุชื่อ');
+  if (d.createdAt) {
+    const dt = new Date(d.createdAt);
+    document.getElementById('v-date').textContent = 'จัดทำเมื่อ ' + dt.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  }
+
+  // PERSONAL
+  let pb = '';
+  pb += vr('ชื่อ-นามสกุล', p.fullName);
+  if (p.birthDate) {
+    const bd = new Date(p.birthDate), age = Math.floor((Date.now() - bd)/(365.25*864e5));
+    pb += vr('วันเกิด', bd.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) + ` (${age} ปี)`);
+  }
+  pb += vr('หมู่เลือด', p.bloodType);
+  if (p.allergies) pb += vr('แพ้', `<strong style="color:#C0392B">${p.allergies}</strong>`);
+  pb += vr('โรคประจำตัว', p.conditions);
+  pb += vr('โรงพยาบาลประจำ', p.regularHospital);
+  if (p.proxyName) {
+    pb += '<div class="v-section-title">👤 ผู้ตัดสินใจแทน (หลัก)</div>';
+    pb += vr('ชื่อ', p.proxyName); pb += vr('ความสัมพันธ์', p.proxyRelation);
+    pb += vr('โทร', p.proxyPhone ? `<a href="tel:${p.proxyPhone}" style="color:var(--sage);font-weight:700;">${p.proxyPhone}</a>` : '');
+  }
+  if (p.proxy2Name) {
+    pb += '<div class="v-section-title">👤 ผู้ตัดสินใจแทน (สำรอง)</div>';
+    pb += vr('ชื่อ', p.proxy2Name); pb += vr('ความสัมพันธ์', p.proxy2Relation);
+    pb += vr('โทร', p.proxy2Phone ? `<a href="tel:${p.proxy2Phone}" style="color:var(--sage);font-weight:700;">${p.proxy2Phone}</a>` : '');
+  }
+  if (p.doctorName) {
+    pb += '<div class="v-section-title">👨‍⚕️ แพทย์ประจำตัว</div>';
+    pb += vr('แพทย์', p.doctorName); pb += vr('โรงพยาบาล', p.doctorHospital);
+    pb += vr('โทร', p.doctorPhone ? `<a href="tel:${p.doctorPhone}" style="color:var(--sage);font-weight:700;">${p.doctorPhone}</a>` : '');
+  }
+  document.getElementById('vb-personal').innerHTML = pb || '<p style="color:var(--text-light)">ไม่ได้ระบุ</p>';
+
+  // LIFE VIEW
+  let lb = '';
+  lb += vr('นิสัยใจคอ', lv.personality);
+  lb += vr('สิ่งที่ภูมิใจ', lv.proudOf);
+  lb += vr('อยากทำก่อนตาย', lv.bucketList);
+  lb += vr('มองความตายว่า', lv.deathView);
+  if (lv.deathReadiness) lb += vr('ความพร้อม', readinessMap[lv.deathReadiness] || lv.deathReadiness);
+  if (lv.palliativeAgree) lb += vr('Palliative Care', palliativeMap[lv.palliativeAgree] || lv.palliativeAgree);
+  if (lv.priorities && Object.keys(lv.priorities).length) {
+    lb += '<div class="v-section-title">⭐ คุณค่าสำคัญ 3 อันดับ</div>';
+    const sorted = Object.entries(lv.priorities).sort((a,b)=>a[1]-b[1]);
+    sorted.forEach(([k,v]) => {
+      const label = k === 'other' ? (lv.priorityOtherText || 'อื่นๆ') : (priorityLabels[k] || k);
+      lb += `<div class="v-row"><span class="v-lbl">อันดับ ${v}</span><span class="v-val">${label}</span></div>`;
+    });
+  }
+  document.getElementById('vb-life').innerHTML = lb || '<p style="color:var(--text-light)">ไม่ได้ระบุ</p>';
+
+  // MEDICAL
+  let mb = '';
+  if (m.treatmentChoice) {
+    mb += `<div class="directive-main"><div class="dm-label">⚕️ ความต้องการหลักด้านการรักษา</div><div class="dm-text">${treatmentMap[m.treatmentChoice] || m.treatmentChoice}</div></div>`;
+  }
+  const uc = m.unacceptable || {};
+  const uncList = [];
+  if (uc.dementia) uncList.push('ไม่มีสติรู้คิด จำคนรักไม่ได้');
+  if (uc.vegetative) uncList.push('สภาพผักถาวร');
+  if (uc.ventilator) uncList.push('พึ่งเครื่องช่วยหายใจตลอดชีวิต');
+  if (uc.nocomm) uncList.push('สื่อสารไม่ได้ถาวร');
+  if (uc.pain) uncList.push('ปวดทรมานต่อเนื่องบรรเทาไม่ได้');
+  if (uc.other) uncList.push(uc.other);
+  if (uncList.length) {
+    mb += '<div class="v-section-title">🚫 สภาพที่ยอมรับไม่ได้ — ให้เปลี่ยนเป็น Palliative Care:</div>';
+    mb += uncList.map(t => vtag(t,'red')).join('');
+  }
+  if (m.deathLocation) mb += '<hr class="v-divider">' + vr('ต้องการเสียชีวิตที่', locationMap[m.deathLocation] || m.deathLocation);
+  if (m.treatmentNotes) mb += vr('หมายเหตุ', m.treatmentNotes);
+  document.getElementById('vb-medical').innerHTML = mb || '<p style="color:var(--text-light)">ไม่ได้ระบุ</p>';
+
+  // CARE
+  const cc = c.careChecks || {};
+  const careLabels = {
+    clean:'ให้ร่างกายสะอาด ห้องพักสะอาด', symptoms:'บรรเทาอาการคลื่นไส้ หายใจสั้น เพ้อ',
+    lips:'ริมฝีปากชุ่มชื้น ดูแลช่องปาก', listen:'คนรอบข้างรับฟังความรู้สึก',
+    affirm:'ย้ำเตือนความดีงาม และบอกรัก', touch:'การสัมผัส จับมือ โอบกอด แม้ไม่รู้สึกตัว',
+    painFull:'ยาระงับปวดเพียงพอ แม้จะสะลึม', painConscious:'ยาระงับปวดในระดับที่ยังมีสติ'
+  };
+  let cb2 = '';
+  const checkedCares = Object.entries(cc).filter(([,v])=>v).map(([k])=>careLabels[k]).filter(Boolean);
+  if (checkedCares.length) {
+    cb2 += '<div class="check-list-v">' + checkedCares.map(t=>`<div class="cli"><span class="icon">✅</span><span>${t}</span></div>`).join('') + '</div>';
+  }
+  cb2 += vr('เพลง/เสียง', c.music);
+  cb2 += vr('สิ่งในห้องพัก', c.roomItems);
+  cb2 += vr('ต้องการพบ', c.meetPeople);
+  cb2 += vr('ผู้นำทางจากไป', c.guide);
+  cb2 += vr('ไม่ต้องการ', c.doNotWant);
+  cb2 += vr('ฝากจัดการ', c.otherWishes);
+  if (c.diagnosisPref) {
+    cb2 += '<hr class="v-divider"><div class="v-section-title">📢 การสื่อสาร</div>';
+    cb2 += vr('รับรู้คำวินิจฉัย', diagMap[c.diagnosisPref] || c.diagnosisPref);
+    cb2 += vr('ผู้ร่วมรับทราบ', c.diagnosisCompanion || c.diagnosisProxy);
+  }
+  const coml = c.commChecks || {};
+  const commLabels = { love:'💛 รักพวกเขา', thanks:'🙏 ขอบคุณ', sorry:'🤍 ขอโทษ', accept:'🕊️ ยอมรับความตายได้', peace:'☮️ ต้องการบรรยากาศสงบ' };
+  const checkedComm = Object.entries(coml).filter(([,v])=>v).map(([k])=>commLabels[k]).filter(Boolean);
+  if (checkedComm.length) {
+    cb2 += '<div class="check-list-v" style="margin-top:8px;">' + checkedComm.map(t=>`<div class="cli"><span class="icon">—</span><span>${t}</span></div>`).join('') + '</div>';
+  }
+  cb2 += vr('อยากให้จดจำว่า', c.remembrance);
+  document.getElementById('vb-care').innerHTML = cb2 || '<p style="color:var(--text-light)">ไม่ได้ระบุ</p>';
+
+  // MESSAGE
+  if (c.messageToFamily) {
+    document.getElementById('vc-message').style.display = 'block';
+    document.getElementById('vb-message').textContent = c.messageToFamily;
+  }
+
+  // ESTATE
+  let eb = '';
+  if (e.organDonation) eb += vr('บริจาคอวัยวะ', organMap[e.organDonation] || e.organDonation);
+  if (e.organDetails) eb += vr('รายละเอียด', e.organDetails);
+  if (e.funeralStyle) {
+    eb += '<hr class="v-divider"><div class="v-section-title">🕯️ งานศพ</div>';
+    eb += vr('รูปแบบ', funeralMap[e.funeralStyle] || e.funeralStyle);
+    eb += vr('จำนวนวัน', e.funeralDays); eb += vr('วงเงิน', e.funeralBudget);
+    eb += vr('ผู้ดูแล', e.funeralManager); eb += vr('ความต้องการพิเศษ', e.funeralWishes);
+  }
+  if (e.hasWill) {
+    eb += '<hr class="v-divider"><div class="v-section-title">📄 เอกสาร</div>';
+    eb += vr('พินัยกรรม', willMap[e.hasWill] || e.hasWill);
+    eb += vr('อยู่ที่', e.willLocation); eb += vr('ผู้รับประโยชน์', e.insurance);
+    eb += vr('ข้อมูลบัญชี', e.accountInfo);
+  }
+  if (e.informed) eb += '<hr class="v-divider">' + vr('คนที่รับทราบแล้ว', e.informed);
+  document.getElementById('vb-estate').innerHTML = eb || '<p style="color:var(--text-light)">ไม่ได้ระบุ</p>';
+}
+
+// QR
+function generateQR() {
+  const c = document.getElementById('qrcode-display');
+  c.innerHTML = '';
+  if (typeof QRCode === 'undefined') { c.innerHTML = '<p style="color:var(--text-light);padding:20px;">กำลังโหลด QR...</p>'; return; }
+  const url = getQRUrl();
+  try {
+    new QRCode(c, { text: url, width: 200, height: 200, colorDark: '#2D3748', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  } catch(e) {
+    c.innerHTML = '<p style="color:var(--terra);font-size:13px;">สร้าง QR ไม่ได้ — ใช้ปุ่ม "คัดลอก Link" แทน</p>';
+  }
+}
+
+function downloadQR() {
+  const canvas = document.querySelector('#qrcode-display canvas');
+  const img = document.querySelector('#qrcode-display img');
+  if (canvas) { const a = document.createElement('a'); a.download = 'สมุดเบาใจ-QR.png'; a.href = canvas.toDataURL(); a.click(); }
+  else if (img) { const a = document.createElement('a'); a.download = 'สมุดเบาใจ-QR.png'; a.href = img.src; a.click(); }
+  else alert('รอ QR สร้างเสร็จก่อน');
+}
+
+function copyLink() {
+  const url = getQRUrl();
+  navigator.clipboard.writeText(url).then(() => { alert('✅ คัดลอก link แล้ว! ส่งให้ครอบครัวทาง LINE ได้เลย'); }).catch(() => { prompt('คัดลอก link นี้:', url); });
+}
+
+function printWalletCard() {
+  const p = bookData.personal || {};
+  const sec = document.getElementById('wallet-card-section');
+  document.getElementById('wc-name').textContent = p.fullName || '';
+  document.getElementById('wc-proxy').innerHTML = p.proxyName ? `ผู้ตัดสินใจแทน: <strong>${p.proxyName}</strong> โทร ${p.proxyPhone || '—'}` : '';
+  const wqr = document.getElementById('wc-qr');
+  wqr.innerHTML = '';
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(wqr, { text: window.location.href, width: 100, height: 100, colorDark: '#2D3748', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }
+  sec.style.display = 'block';
+  setTimeout(() => window.print(), 500);
+}
+
+function editBook() {
+  const p = bookData.personal || {}, lv = bookData.lifeView || {}, m = bookData.medical || {}, c = bookData.care || {}, e = bookData.estate || {};
+  const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v || ''; };
+  const setCheck = (id, v) => { const el = document.getElementById(id); if(el) el.checked = !!v; };
+  const setRadio = (name, v) => { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if(el) { el.checked = true; el.closest('.radio-card')?.classList.add('selected'); } };
+
+  s('fullName',p.fullName); s('nickname',p.nickname); s('birthDate',p.birthDate); s('idNumber',p.idNumber);
+  s('bloodType',p.bloodType); s('address',p.address); s('regularHospital',p.regularHospital);
+  s('allergies',p.allergies); s('conditions',p.conditions);
+  s('proxyName',p.proxyName); s('proxyRelation',p.proxyRelation); s('proxyPhone',p.proxyPhone);
+  s('proxy2Name',p.proxy2Name); s('proxy2Relation',p.proxy2Relation); s('proxy2Phone',p.proxy2Phone);
+  s('doctorName',p.doctorName); s('doctorHospital',p.doctorHospital); s('doctorPhone',p.doctorPhone);
+
+  s('personality',lv.personality); s('proudOf',lv.proudOf); s('bucketList',lv.bucketList);
+  s('deathView',lv.deathView); setRadio('deathReadiness', lv.deathReadiness); setRadio('palliativeAgree', lv.palliativeAgree);
+  if (lv.priorities) {
+    Object.entries(lv.priorities).forEach(([k,v]) => {
+      const sel = document.querySelector(`.priority-sel[data-key="${k}"]`);
+      if (sel) sel.value = String(v);
+    });
+  }
+  s('priority-other-text', lv.priorityOtherText);
+
+  setRadio('treatmentChoice', m.treatmentChoice); s('treatmentNotes', m.treatmentNotes);
+  if (m.unacceptable) {
+    Object.entries(m.unacceptable).forEach(([k,v]) => {
+      if (k !== 'other') setCheck('cond-'+k, v);
+    });
+    s('cond-other', m.unacceptable.other);
+  }
+  setRadio('deathLocation', m.deathLocation);
+
+  const cc = c.careChecks || {};
+  Object.entries(cc).forEach(([k,v]) => {
+    const map = {clean:'care-clean',symptoms:'care-symptoms',lips:'care-lips',listen:'care-listen',affirm:'care-affirm',touch:'care-touch',painFull:'care-pain-full',painConscious:'care-pain-conscious'};
+    if (map[k]) setCheck(map[k], v);
+  });
+  s('music',c.music); s('roomItems',c.roomItems); s('meetPeople',c.meetPeople);
+  s('guide',c.guide); s('doNotWant',c.doNotWant); s('otherWishes',c.otherWishes);
+  setRadio('diagnosisPref', c.diagnosisPref); s('diagnosisCompanion',c.diagnosisCompanion); s('diagnosisProxy',c.diagnosisProxy);
+  const coml = c.commChecks || {};
+  Object.entries(coml).forEach(([k,v]) => setCheck('comm-'+k,v));
+  s('remembrance',c.remembrance); s('messageToFamily',c.messageToFamily);
+
+  setRadio('organDonation', e.organDonation); s('organDetails',e.organDetails);
+  setRadio('funeralStyle', e.funeralStyle); s('funeralDays',e.funeralDays);
+  s('funeralBudget',e.funeralBudget); s('funeralManager',e.funeralManager); s('funeralWishes',e.funeralWishes);
+  setRadio('hasWill', e.hasWill);
+  if (e.hasWill === 'yes') toggleWill(true);
+  s('willLocation',e.willLocation); s('insurance',e.insurance); s('accountInfo',e.accountInfo);
+  const aw = e.awarenessChecks || {};
+  Object.entries(aw).forEach(([k,v]) => setCheck('aw-'+k,v));
+  s('informed',e.informed);
+
+  document.getElementById('viewerApp').style.display = 'none';
+  document.getElementById('formApp').style.display = 'block';
+  goStep(1);
+}
+</script>
+</body>
+</html>
