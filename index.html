@@ -232,7 +232,6 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-primary" onclick="startNew()" style="font-size:16px;padding:14px 36px;margin-bottom:12px;">
       ✏️ สร้างสมุดเบาใจของฉัน
     </button>
-
   </div>
   <div style="max-width:680px;margin:0 auto;padding:0 20px 16px;">
     <div class="card pin-card">
@@ -303,13 +302,13 @@ textarea { resize: vertical; min-height: 80px; }
             <input type="text" id="nickname" placeholder="ชื่อเล่น">
           </div>
           <div class="field">
-            <label class="field-label">วันเกิด</label>
+            <label class="field-label">วันเกิด <span style="font-size:11px;color:var(--text-light);">(ค.ศ.)</span></label>
             <input type="date" id="birthDate">
           </div>
         </div>
         <div class="row-2">
           <div class="field">
-            <label class="field-label">เลขบัตรประชาชน <span class="optional">(ถ้าต้องการ)</span></label>
+            <label class="field-label">เลขบัตรประชาชน <span style="color:var(--terra);font-size:12px;">* จำเป็น</span></label>
             <input type="text" id="idNumber" placeholder="X-XXXX-XXXXX-XX-X" maxlength="17">
           </div>
           <div class="field">
@@ -400,8 +399,17 @@ textarea { resize: vertical; min-height: 80px; }
           <input type="text" id="save-lastname" placeholder="นามสกุล (ภาษาไทย)">
         </div>
         <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <input type="text" id="save-pin" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="pin-input" placeholder="PIN 6 หลัก" style="flex:1;">
-          <button class="btn btn-primary" onclick="saveDraft()" style="white-space:nowrap;">💾 บันทึก</button>
+          <input type="text" id="save-pin" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="pin-input" placeholder="PIN ดูข้อมูล 6 หลัก" style="flex:1;">
+        </div>
+        <div style="margin-bottom:6px;">
+          <p style="font-size:12px;color:var(--text-light);margin-bottom:6px;">🔐 รหัสแก้ไข — เจ้าของข้อมูลเท่านั้น (ไม่ต้องแชร์ใคร)</p>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="save-editpin" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="pin-input" placeholder="รหัสแก้ไข 6 หลัก" style="flex:1;">
+            <input type="text" id="save-editpin-confirm" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="pin-input" placeholder="ยืนยันรหัสแก้ไข" style="flex:1;">
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <button class="btn btn-primary" onclick="saveDraft()" style="width:100%;">💾 บันทึก</button>
         </div>
         <div id="save-status" style="font-size:13px;min-height:20px;"></div>
       </div>
@@ -980,17 +988,82 @@ function showToast(msg) {
   t._t = setTimeout(() => { t.style.opacity = '0'; }, 2200);
 }
 function editFromSummary() {
-  const pin = prompt('🔐 ยืนยัน PIN 6 หลักเพื่อแก้ไขข้อมูล');
-  if (!pin) return;
-  if (pin.trim() !== currentPinOnly) { alert('❌ PIN ไม่ถูกต้อง'); return; }
+  if (bookData.editPin) {
+    const pin = prompt('🔐 กรอกรหัสแก้ไข 6 หลัก\n(ต่างจาก PIN สำหรับดูข้อมูล)');
+    if (!pin) return;
+    if (pin.trim() === bookData.editPin) {
+      proceedToEdit();
+    } else {
+      const forgot = confirm('❌ รหัสแก้ไขไม่ถูกต้อง\n\nต้องการ Reset รหัสแก้ไขด้วยวันเกิด + เลขบัตรประชาชน?');
+      if (forgot) resetOrSetupEditPin();
+    }
+  } else {
+    // ไม่มี editPin (ข้อมูลเก่า) → ให้ตั้งก่อน
+    const go = confirm('⚠️ บัญชีนี้ยังไม่มีรหัสแก้ไข\nกรุณาตั้งรหัสแก้ไขก่อน\n\nระบบจะให้ verify ตัวตนด้วยวันเกิด + เลขบัตรประชาชน');
+    if (go) resetOrSetupEditPin();
+  }
+}
+
+function proceedToEdit() {
   document.getElementById('viewerApp').style.display = 'none';
   editBook();
   const sfn = document.getElementById('save-firstname');
   const sln = document.getElementById('save-lastname');
   const sp = document.getElementById('save-pin');
+  const sep = document.getElementById('save-editpin');
+  const sepc = document.getElementById('save-editpin-confirm');
   if (sfn) sfn.value = currentFirstName;
   if (sln) sln.value = currentLastName;
   if (sp) sp.value = currentPinOnly;
+  if (sep) sep.value = bookData.editPin || '';
+  if (sepc) sepc.value = bookData.editPin || '';
+}
+
+function getBirthDateDDMMYYYY() {
+  // Convert stored YYYY-MM-DD (AD) → DDMMYYYY
+  const bd = bookData.personal?.birthDate || '';
+  const parts = bd.split('-');
+  if (parts.length === 3) {
+    return parts[2].padStart(2,'0') + parts[1].padStart(2,'0') + parts[0];
+  }
+  return '';
+}
+
+function verifyIdentity() {
+  const bd = prompt('🗓️ กรอกวันเกิด (DDMMYYYY ค.ศ.)\nเช่น วันที่ 5 มกราคม 1980 → 05011980');
+  if (!bd) return false;
+  const idCard = prompt('🪪 กรอกเลขบัตรประชาชน 13 หลัก\n(กรอกติดกัน ไม่ต้องมีขีด)');
+  if (!idCard) return false;
+  const storedBD = getBirthDateDDMMYYYY();
+  const storedID = (bookData.personal?.idNumber || '').replace(/[-\s]/g, '');
+  const enteredID = idCard.replace(/[-\s]/g, '');
+  if (bd.trim() !== storedBD || enteredID !== storedID) {
+    alert('❌ ข้อมูลไม่ถูกต้อง\nกรุณาตรวจสอบวันเกิด (ค.ศ.) และเลขบัตรประชาชน');
+    return false;
+  }
+  return true;
+}
+
+function resetOrSetupEditPin() {
+  if (!bookData.personal?.idNumber) {
+    alert('⚠️ ไม่พบเลขบัตรประชาชนในข้อมูล\nกรุณาแก้ไขแบบฟอร์มและใส่เลขบัตรประชาชนก่อน');
+    return;
+  }
+  if (!verifyIdentity()) return;
+  const newPin = prompt('🔐 ตั้งรหัสแก้ไขใหม่ (6 หลัก ตัวเลขเท่านั้น)');
+  if (!newPin || !/^\d{6}$/.test(newPin.trim())) { alert('⚠️ กรุณากรอกตัวเลข 6 หลัก'); return; }
+  const conf = prompt('🔐 ยืนยันรหัสแก้ไขอีกครั้ง');
+  if (newPin.trim() !== conf?.trim()) { alert('❌ รหัสไม่ตรงกัน'); return; }
+  const pin = newPin.trim();
+  bookData.editPin = pin;
+  fetch(`${FIREBASE_URL}/${currentPin}.json`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ editPin: pin })
+  }).then(() => {
+    alert('✅ ตั้งรหัสแก้ไขสำเร็จ!');
+    proceedToEdit();
+  }).catch(() => alert('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'));
 }
 function getQRUrl() {
   if (currentFirstName && currentLastName) {
@@ -1084,10 +1157,17 @@ async function saveDraft() {
   const firstName = (document.getElementById('save-firstname')?.value || '').trim();
   const lastName = (document.getElementById('save-lastname')?.value || '').trim();
   const pin = (document.getElementById('save-pin')?.value || '').trim();
+  const editPin = (document.getElementById('save-editpin')?.value || '').trim();
+  const editPinConfirm = (document.getElementById('save-editpin-confirm')?.value || '').trim();
   const statusEl = document.getElementById('save-status');
   if (!firstName) { statusEl.textContent = '⚠️ กรุณาใส่ชื่อ'; statusEl.style.color = 'var(--terra)'; return; }
   if (!lastName) { statusEl.textContent = '⚠️ กรุณาใส่นามสกุล'; statusEl.style.color = 'var(--terra)'; return; }
-  if (!/^\d{6}$/.test(pin)) { statusEl.textContent = '⚠️ PIN ต้องเป็นตัวเลข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
+  if (!/^\d{6}$/.test(pin)) { statusEl.textContent = '⚠️ PIN ดูข้อมูลต้องเป็นตัวเลข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
+  const idVal = (document.getElementById('idNumber')?.value || '').trim();
+  if (!idVal) { statusEl.textContent = '⚠️ กรุณาใส่เลขบัตรประชาชน (จำเป็น)'; statusEl.style.color = 'var(--terra)'; return; }
+  if (editPin && !/^\d{6}$/.test(editPin)) { statusEl.textContent = '⚠️ รหัสแก้ไขต้องเป็นตัวเลข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
+  if (editPin && editPin !== editPinConfirm) { statusEl.textContent = '⚠️ รหัสแก้ไขไม่ตรงกัน'; statusEl.style.color = 'var(--terra)'; return; }
+  if (!editPin && !bookData.editPin) { statusEl.textContent = '⚠️ กรุณาตั้งรหัสแก้ไข 6 หลัก'; statusEl.style.color = 'var(--terra)'; return; }
   const userKey = makeUserKey(firstName, lastName, pin);
   currentPin = userKey;
   currentFirstName = firstName;
@@ -1097,6 +1177,8 @@ async function saveDraft() {
   statusEl.textContent = '⏳ กำลังบันทึก...';
   statusEl.style.color = 'var(--text-light)';
   const data = collectData();
+  data.editPin = editPin || bookData.editPin || '';
+  bookData.editPin = data.editPin;
   const ok = await saveToFirebase(userKey, data);
   if (ok) {
     statusEl.textContent = `✅ บันทึกสำเร็จ! ชื่อ: ${firstName} ${lastName} | PIN: ${pin}`;
@@ -1136,6 +1218,7 @@ function goStepDirect(n) {
 function validateStep(s) {
   if (s === 1) {
     if (!document.getElementById('fullName').value.trim()) { showAlert('กรุณาระบุชื่อ-นามสกุลก่อน'); return false; }
+    if (!document.getElementById('idNumber').value.trim()) { showAlert('กรุณาใส่เลขบัตรประชาชน (จำเป็นสำหรับการ reset รหัสแก้ไข)'); return false; }
   }
   return true;
 }
@@ -1411,7 +1494,6 @@ function copyLink() {
 function showWalletCardDesigner() {
   document.getElementById('wallet-designer').style.display = 'block';
   document.body.style.overflow = 'hidden';
-  // slight delay to let modal render, then draw
   setTimeout(() => walletDesignerUpdate(), 80);
 }
 
@@ -1423,7 +1505,6 @@ function closeWalletDesigner() {
 function walletDesignerUpdate() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   document.getElementById('wd-contact-section').style.display = opt === 'contact' ? 'block' : 'none';
-  // highlight selected radio card
   ['hide','show','contact'].forEach(v => {
     const lbl = document.getElementById('wdopt-'+v+'-label');
     if (lbl) lbl.style.borderColor = opt === v ? 'var(--sage)' : 'var(--border)';
@@ -1435,7 +1516,6 @@ function walletDesignerUpdate() {
 function renderWalletPreview() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
-  // Pre-render QR first, then draw card
   wdPreRenderQR(getQRUrl(), 230, () => {
     drawWalletCard(document.getElementById('wallet-canvas'), opt, contactText, false);
   });
@@ -1457,50 +1537,34 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   const W = 1011, H = 638;
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-
-  // Background gradient
   const grad = ctx.createLinearGradient(0, 0, W, H);
   grad.addColorStop(0, '#3D6B5C');
   grad.addColorStop(0.55, '#5B8A7A');
   grad.addColorStop(1, '#7BA99A');
   ctx.fillStyle = grad;
   ctxRoundRect(ctx, 0, 0, W, H, 36); ctx.fill();
-
-  // Decorative circles
   ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = '#fff';
   ctx.beginPath(); ctx.arc(W*0.85, H*-0.1, 280, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(W*0.9, H*0.95, 200, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(W*0.02, H*0.85, 160, 0, Math.PI*2); ctx.fill();
   ctx.restore();
-
-  // Top stripe
   ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, W, 90); ctx.restore();
-
-  // QR (right side) — white bg first
   const qrSize = 230;
   const qrX = W - qrSize - 44;
   const qrY = 130;
   ctx.fillStyle = '#fff';
   ctxRoundRect(ctx, qrX-12, qrY-12, qrSize+24, qrSize+24, 14); ctx.fill();
-
-  // Draw pre-rendered QR from hidden div
   const hiddenDiv = document.getElementById('wd-qr-hidden');
   if (hiddenDiv) {
     const qrEl = hiddenDiv.querySelector('canvas') || hiddenDiv.querySelector('img');
     if (qrEl) { try { ctx.drawImage(qrEl, qrX, qrY, qrSize, qrSize); } catch(e) {} }
   }
-
-  // "แสกน QR" label below QR box
   ctx.font = `26px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.72; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
   ctx.fillText('แสกน QR เพื่อดูรายละเอียด', qrX + qrSize/2, qrY + qrSize + 34);
   ctx.textAlign = 'left'; ctx.globalAlpha = 1;
-
-  // Text right boundary (don't overlap QR)
   const textRight = qrX - 22;
-
-  // Logo
   ctx.fillStyle = '#fff';
   ctx.font = `bold 56px 'Sarabun', sans-serif`;
   ctx.fillText('🌿 สมุดเบาใจ', 52, 62);
@@ -1508,18 +1572,12 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   ctx.globalAlpha = 0.82;
   ctx.fillText('บันทึกเพื่อการวางแผนดูแลสุขภาพล่วงหน้า', 52, 108);
   ctx.globalAlpha = 1;
-
-  // Divider
   ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(52, 126); ctx.lineTo(W-52, 126); ctx.stroke();
-
-  // Name (truncated to fit left column)
   const p = bookData.personal || {};
   const displayName = p.fullName || (currentFirstName+' '+currentLastName).trim() || '—';
   ctx.font = `bold 56px 'Sarabun', sans-serif`; ctx.fillStyle = '#fff';
   ctx.fillText(wdTruncate(ctx, displayName, textRight - 52), 52, 200);
-
-  // Sub info (truncated)
   ctx.font = `30px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88;
   let infoY = 252;
   if (p.proxyName) {
@@ -1549,17 +1607,13 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
     ctx.fillText(wdTruncate(ctx, '🏥 '+p.regularHospital, textRight - 52), 52, infoY);
   }
   ctx.globalAlpha = 1;
-
-  // PIN area (bottom)
   const pinY = H - 130;
   ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(52, pinY-20); ctx.lineTo(W-52, pinY-20); ctx.stroke();
-
   ctx.font = `bold 28px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.65; ctx.fillStyle = '#fff';
   ctx.fillText('รหัสเข้าถึงข้อมูล', 52, pinY + 8);
   ctx.globalAlpha = 1;
-
   if (pinOpt === 'show') {
     ctx.font = `bold 40px 'Sarabun', sans-serif`; ctx.fillStyle = '#FFE066';
     ctx.fillText(currentPinOnly || '------', 52, pinY + 58);
@@ -1572,8 +1626,6 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
     ctx.fillText('ติดต่อผู้รู้รหัส: เจ้าของบัตรโดยตรง', 52, pinY + 58);
     ctx.globalAlpha = 1;
   }
-
-  // URL bottom-left
   ctx.font = `22px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff';
   ctx.fillText(window.location.origin + window.location.pathname, 52, H-24);
@@ -1603,7 +1655,6 @@ function ctxRoundRect(ctx, x, y, w, h, r) {
 function downloadWalletPNG() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
-  // Pre-render QR then draw off-screen canvas
   wdPreRenderQR(getQRUrl(), 230, () => {
     const offCanvas = document.createElement('canvas');
     drawWalletCard(offCanvas, opt, contactText, true);
@@ -1618,8 +1669,84 @@ function downloadWalletPNG() {
   });
 }
 
-// legacy stub (button already changed to showWalletCardDesigner)
 function printWalletCard() { showWalletCardDesigner(); }
+
+function editFromSummary() {
+  if (bookData.editPin) {
+    const pin = prompt('🔐 กรอกรหัสแก้ไข 6 หลัก\n(ต่างจาก PIN สำหรับดูข้อมูล)');
+    if (!pin) return;
+    if (pin.trim() === bookData.editPin) {
+      proceedToEdit();
+    } else {
+      const forgot = confirm('❌ รหัสแก้ไขไม่ถูกต้อง\n\nต้องการ Reset รหัสแก้ไขด้วยวันเกิด + เลขบัตรประชาชน?');
+      if (forgot) resetOrSetupEditPin();
+    }
+  } else {
+    const go = confirm('⚠️ บัญชีนี้ยังไม่มีรหัสแก้ไข\nกรุณาตั้งรหัสแก้ไขก่อน\n\nระบบจะให้ verify ตัวตนด้วยวันเกิด + เลขบัตรประชาชน');
+    if (go) resetOrSetupEditPin();
+  }
+}
+
+function proceedToEdit() {
+  document.getElementById('viewerApp').style.display = 'none';
+  editBook();
+  const sfn = document.getElementById('save-firstname');
+  const sln = document.getElementById('save-lastname');
+  const sp = document.getElementById('save-pin');
+  const sep = document.getElementById('save-editpin');
+  const sepc = document.getElementById('save-editpin-confirm');
+  if (sfn) sfn.value = currentFirstName;
+  if (sln) sln.value = currentLastName;
+  if (sp) sp.value = currentPinOnly;
+  if (sep) sep.value = bookData.editPin || '';
+  if (sepc) sepc.value = bookData.editPin || '';
+}
+
+function getBirthDateDDMMYYYY() {
+  const bd = bookData.personal?.birthDate || '';
+  const parts = bd.split('-');
+  if (parts.length === 3) {
+    return parts[2].padStart(2,'0') + parts[1].padStart(2,'0') + parts[0];
+  }
+  return '';
+}
+
+function verifyIdentity() {
+  const bd = prompt('🗓️ กรอกวันเกิด (DDMMYYYY ค.ศ.)\nเช่น วันที่ 5 มกราคม 1980 → 05011980');
+  if (!bd) return false;
+  const idCard = prompt('🪪 กรอกเลขบัตรประชาชน 13 หลัก\n(กรอกติดกัน ไม่ต้องมีขีด)');
+  if (!idCard) return false;
+  const storedBD = getBirthDateDDMMYYYY();
+  const storedID = (bookData.personal?.idNumber || '').replace(/[-\s]/g, '');
+  const enteredID = idCard.replace(/[-\s]/g, '');
+  if (bd.trim() !== storedBD || enteredID !== storedID) {
+    alert('❌ ข้อมูลไม่ถูกต้อง\nกรุณาตรวจสอบวันเกิด (ค.ศ.) และเลขบัตรประชาชน');
+    return false;
+  }
+  return true;
+}
+
+function resetOrSetupEditPin() {
+  if (!bookData.personal?.idNumber) {
+    alert('⚠️ ไม่พบเลขบัตรประชาชนในข้อมูล\nกรุณาแก้ไขแบบฟอร์มและใส่เลขบัตรประชาชนก่อน');
+    return;
+  }
+  if (!verifyIdentity()) return;
+  const newPin = prompt('🔐 ตั้งรหัสแก้ไขใหม่ (6 หลัก ตัวเลขเท่านั้น)');
+  if (!newPin || !/^\d{6}$/.test(newPin.trim())) { alert('⚠️ กรุณากรอกตัวเลข 6 หลัก'); return; }
+  const conf = prompt('🔐 ยืนยันรหัสแก้ไขอีกครั้ง');
+  if (newPin.trim() !== conf?.trim()) { alert('❌ รหัสไม่ตรงกัน'); return; }
+  const pin = newPin.trim();
+  bookData.editPin = pin;
+  fetch(`${FIREBASE_URL}/${currentPin}.json`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ editPin: pin })
+  }).then(() => {
+    alert('✅ ตั้งรหัสแก้ไขสำเร็จ!');
+    proceedToEdit();
+  }).catch(() => alert('❌ เกิดข้อผิดพลาด กรุณาลองใหม่'));
+}
 
 function editBook() {
   const p = bookData.personal || {}, lv = bookData.lifeView || {}, m = bookData.medical || {}, c = bookData.care || {}, e = bookData.estate || {};
