@@ -838,7 +838,7 @@ textarea { resize: vertical; min-height: 80px; }
         <!-- CANVAS PREVIEW -->
         <div style="margin-bottom:18px;text-align:center;">
           <div style="font-size:12px;color:var(--text-light);margin-bottom:8px;">ตัวอย่างบัตร (พรีวิว)</div>
-          <canvas id="wallet-canvas" style="width:100%;max-width:400px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:block;margin:0 auto;"></canvas>
+          <canvas id="wallet-canvas" style="width:100%;max-width:400px;height:auto;aspect-ratio:1011/638;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:block;margin:0 auto;"></canvas>
         </div>
 
         <!-- ACTIONS -->
@@ -1393,7 +1393,6 @@ function renderViewer(d) {
   const uncList = [];
   if (uc.dementia) uncList.push('ไม่มีสติรู้คิด จำคนรักไม่ได้');
   if (uc.vegetative) uncList.push('สภาพผักถาวร');
-  if (uc.ventilator) uncList.push('พึ่งเครื่องช่วยหายใจตลอดชีวิต');
   if (uc.nocomm) uncList.push('สื่อสารไม่ได้ถาวร');
   if (uc.pain) uncList.push('ปวดทรมานต่อเนื่องบรรเทาไม่ได้');
   if (uc.other) uncList.push(uc.other);
@@ -1586,7 +1585,6 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   ctx.font = `bold 50px 'Sarabun', sans-serif`; ctx.fillStyle = '#fff'; ctx.globalAlpha = 1;
   ctx.fillText(wdTruncate(ctx, displayName, textMaxW), 44, 148);
 
-  // --- Content blocks ---
   let y = 192;
   let firstBlock = true;
   const drawLabel = (txt) => {
