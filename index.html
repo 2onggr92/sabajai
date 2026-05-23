@@ -1522,13 +1522,24 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   ctx.fillText(wdTruncate(ctx, displayName, textRight - 52), 52, 200);
 
   // Sub info (truncated)
-  ctx.font = `32px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88;
+  ctx.font = `30px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88;
   let infoY = 252;
   if (p.proxyName) {
-    const ln = `ผู้ตัดสินใจแทน: ${p.proxyName}${p.proxyPhone ? '  📞 '+p.proxyPhone : ''}`;
-    ctx.fillText(wdTruncate(ctx, ln, textRight - 52), 52, infoY); infoY += 46;
+    ctx.font = `bold 28px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.65;
+    ctx.fillText('ผู้ตัดสินใจแทน', 52, infoY); infoY += 34;
+    ctx.font = `30px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.92;
+    const ln1 = `${p.proxyName}${p.proxyPhone ? '  📞 '+p.proxyPhone : ''}`;
+    ctx.fillText(wdTruncate(ctx, ln1, textRight - 52), 52, infoY); infoY += 40;
+  }
+  if (p.proxy2Name) {
+    ctx.font = `bold 28px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.65;
+    ctx.fillText('ผู้ตัดสินใจแทน (สำรอง)', 52, infoY); infoY += 34;
+    ctx.font = `30px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.92;
+    const ln2 = `${p.proxy2Name}${p.proxy2Phone ? '  📞 '+p.proxy2Phone : ''}`;
+    ctx.fillText(wdTruncate(ctx, ln2, textRight - 52), 52, infoY); infoY += 40;
   }
   if (p.regularHospital) {
+    ctx.font = `30px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88;
     ctx.fillText(wdTruncate(ctx, '🏥 '+p.regularHospital, textRight - 52), 52, infoY);
   }
   ctx.globalAlpha = 1;
