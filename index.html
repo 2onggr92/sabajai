@@ -1543,6 +1543,8 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
     } else { infoY += 4; }
   }
   if (p.regularHospital) {
+    ctx.font = `bold 28px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.65;
+    ctx.fillText('โรงพยาบาลประจำ', 52, infoY); infoY += 32;
     ctx.font = `30px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88;
     ctx.fillText(wdTruncate(ctx, '🏥 '+p.regularHospital, textRight - 52), 52, infoY);
   }
