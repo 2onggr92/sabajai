@@ -1494,7 +1494,6 @@ function copyLink() {
 function showWalletCardDesigner() {
   document.getElementById('wallet-designer').style.display = 'block';
   document.body.style.overflow = 'hidden';
-  // slight delay to let modal render, then draw
   setTimeout(() => walletDesignerUpdate(), 80);
 }
 
@@ -1506,7 +1505,6 @@ function closeWalletDesigner() {
 function walletDesignerUpdate() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   document.getElementById('wd-contact-section').style.display = opt === 'contact' ? 'block' : 'none';
-  // highlight selected radio card
   ['hide','show','contact'].forEach(v => {
     const lbl = document.getElementById('wdopt-'+v+'-label');
     if (lbl) lbl.style.borderColor = opt === v ? 'var(--sage)' : 'var(--border)';
@@ -1518,7 +1516,6 @@ function walletDesignerUpdate() {
 function renderWalletPreview() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
-  // Pre-render QR first, then draw card
   wdPreRenderQR(getQRUrl(), 240, () => {
     drawWalletCard(document.getElementById('wallet-canvas'), opt, contactText, false);
   });
@@ -1541,7 +1538,6 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Background gradient
   const grad = ctx.createLinearGradient(0, 0, W, H);
   grad.addColorStop(0, '#2E5547');
   grad.addColorStop(0.5, '#5B8A7A');
@@ -1549,50 +1545,42 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
   ctx.fillStyle = grad;
   ctxRoundRect(ctx, 0, 0, W, H, 36); ctx.fill();
 
-  // Decorative circles (subtle)
   ctx.save(); ctx.globalAlpha = 0.07; ctx.fillStyle = '#fff';
   ctx.beginPath(); ctx.arc(W*0.88, H*0.12, 260, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(W*0.04, H*0.88, 180, 0, Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // QR (right side) — white bg first
   const qrSize = 240;
   const qrX = W - qrSize - 44;
   const qrY = 66;
   ctx.fillStyle = '#fff';
   ctxRoundRect(ctx, qrX-14, qrY-14, qrSize+28, qrSize+28, 16); ctx.fill();
 
-  // Draw pre-rendered QR from hidden div
   const hiddenDiv = document.getElementById('wd-qr-hidden');
   if (hiddenDiv) {
     const qrEl = hiddenDiv.querySelector('canvas') || hiddenDiv.querySelector('img');
     if (qrEl) { try { ctx.drawImage(qrEl, qrX, qrY, qrSize, qrSize); } catch(e) {} }
   }
 
-  // "แสกน QR" label below QR box
   ctx.font = `22px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.68; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
   ctx.fillText('แสกน QR เพื่อดูรายละเอียด', qrX + qrSize/2, qrY + qrSize + 34);
   ctx.textAlign = 'left'; ctx.globalAlpha = 1;
 
-  // Text right boundary (don't overlap QR white box)
   const textRight = qrX - 28;
   const textMaxW = textRight - 44;
 
-  // --- Emergency use sentence (top) ---
   ctx.font = `italic 22px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.82; ctx.fillStyle = '#FFE8CC';
-  const emLine1 = 'บัตรนี้ใช้ในกรณีที่ข้าพเจ้าไม่สามารถสื่อสาร';
-  const emLine2 = 'ความต้องการด้านการรักษาพยาบาลด้วยตนเองได้';
+  const emLine1 = 'บัตรนี้ใช้ในกรณีที่ข้าพเจ้าไม่สามารถสื่อสารหรือแสดงความต้องการด้านการรักษาพยาบาล';
+  const emLine2 = 'ด้วยตนเองได้';
   ctx.fillText(emLine1, 44, 44);
   ctx.fillText(emLine2, 44, 70);
   ctx.globalAlpha = 1;
 
-  // Divider below emergency text
   ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(44, 86); ctx.lineTo(textRight, 86); ctx.stroke();
 
-  // --- Name ---
   const p = bookData.personal || {};
   const displayName = p.fullName || (currentFirstName+' '+currentLastName).trim() || '—';
   ctx.font = `bold 50px 'Sarabun', sans-serif`; ctx.fillStyle = '#fff'; ctx.globalAlpha = 1;
@@ -1600,40 +1588,39 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
 
   // --- Content blocks ---
   let y = 192;
+  let firstBlock = true;
   const drawLabel = (txt) => {
-    ctx.font = `bold 24px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.60; ctx.fillStyle = '#fff';
-    ctx.fillText(txt, 44, y); y += 28;
+    if (!firstBlock) y += 14;
+    firstBlock = false;
+    ctx.font = `bold 23px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.58; ctx.fillStyle = '#fff';
+    ctx.fillText(txt, 44, y); y += 10;
   };
   const drawName = (txt) => {
-    ctx.font = `28px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.94; ctx.fillStyle = '#fff';
-    ctx.fillText(wdTruncate(ctx, txt, textMaxW), 44, y); y += 32;
+    ctx.font = `29px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.95; ctx.fillStyle = '#fff';
+    ctx.fillText(wdTruncate(ctx, txt, textMaxW), 52, y); y += 34;
   };
   const drawPhone = (txt) => {
     ctx.font = `24px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.76; ctx.fillStyle = '#fff';
-    ctx.fillText(txt, 44, y); y += 30;
+    ctx.fillText(txt, 52, y); y += 30;
   };
-  const blockGap = () => { y += 8; };
 
   if (p.proxyName) {
     drawLabel('ผู้ตัดสินใจแทน');
     drawName(p.proxyName);
     if (p.proxyPhone) drawPhone('📞 ' + p.proxyPhone);
-    blockGap();
   }
   if (p.proxy2Name) {
     drawLabel('ผู้ตัดสินใจแทน (สำรอง)');
     drawName(p.proxy2Name);
     if (p.proxy2Phone) drawPhone('📞 ' + p.proxy2Phone);
-    blockGap();
   }
   if (p.regularHospital) {
     drawLabel('โรงพยาบาลประจำ');
-    ctx.font = `28px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.88; ctx.fillStyle = '#fff';
-    ctx.fillText(wdTruncate(ctx, '🏥 ' + p.regularHospital, textMaxW), 44, y); y += 32;
+    ctx.font = `29px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.90; ctx.fillStyle = '#fff';
+    ctx.fillText(wdTruncate(ctx, '🏥 ' + p.regularHospital, textMaxW), 52, y); y += 34;
   }
   ctx.globalAlpha = 1;
 
-  // --- PIN area (bottom) ---
   const pinY = H - 138;
   ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(44, pinY - 14); ctx.lineTo(W - 44, pinY - 14); ctx.stroke();
@@ -1680,7 +1667,6 @@ function ctxRoundRect(ctx, x, y, w, h, r) {
 function downloadWalletPNG() {
   const opt = document.querySelector('input[name="wdPinOpt"]:checked')?.value || 'hide';
   const contactText = document.getElementById('wd-contact-input')?.value.trim() || '';
-  // Pre-render QR then draw off-screen canvas
   wdPreRenderQR(getQRUrl(), 240, () => {
     const offCanvas = document.createElement('canvas');
     drawWalletCard(offCanvas, opt, contactText, true);
@@ -1695,7 +1681,6 @@ function downloadWalletPNG() {
   });
 }
 
-// legacy stub (button already changed to showWalletCardDesigner)
 function printWalletCard() { showWalletCardDesigner(); }
 
 function editBook() {
