@@ -1572,8 +1572,8 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
 
   ctx.font = `italic 22px 'Sarabun', sans-serif`;
   ctx.globalAlpha = 0.82; ctx.fillStyle = '#FFE8CC';
-  const emLine1 = 'บัตรนี้ใช้ในกรณีที่ข้าพเจ้าไม่สามารถสื่อสารหรือแสดงความต้องการด้านการรักษาพยาบาล';
-  const emLine2 = 'ด้วยตนเองได้';
+  const emLine1 = 'บัตรนี้ใช้ในกรณีที่ข้าพเจ้าไม่สามารถสื่อสารหรือ';
+  const emLine2 = 'แสดงความต้องการด้านการรักษาพยาบาล ด้วยตนเองได้';
   ctx.fillText(emLine1, 44, 44);
   ctx.fillText(emLine2, 44, 70);
   ctx.globalAlpha = 1;
@@ -1593,7 +1593,7 @@ function drawWalletCard(canvas, pinOpt, contactText, highRes) {
     if (!firstBlock) y += 14;
     firstBlock = false;
     ctx.font = `bold 23px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.58; ctx.fillStyle = '#fff';
-    ctx.fillText(txt, 44, y); y += 10;
+    ctx.fillText(txt, 44, y); y += 30;
   };
   const drawName = (txt) => {
     ctx.font = `29px 'Sarabun', sans-serif`; ctx.globalAlpha = 0.95; ctx.fillStyle = '#fff';
